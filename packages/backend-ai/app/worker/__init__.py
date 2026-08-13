@@ -1,1 +1,0 @@
-"""Workers Celery (oracle listener)."""

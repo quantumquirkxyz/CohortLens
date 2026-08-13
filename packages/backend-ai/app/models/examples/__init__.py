@@ -1,1 +1,0 @@
-"""Trainable model examples."""

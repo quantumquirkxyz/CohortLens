@@ -1,1 +1,0 @@
-"""Capa de persistencia (SQLAlchemy)."""
