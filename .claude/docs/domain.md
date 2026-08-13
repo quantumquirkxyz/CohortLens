@@ -4,39 +4,25 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT-MAP.md`** at the repo root — this repo is **multi-context**: the map points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`** at the repo root — read ADRs that touch the area you're about to work in. Also check `packages/<context>/docs/adr/` for context-scoped decisions.
+- **`CONTEXT.md`** at the repo root — this repo is **single-context**: one shared glossary for the domain (the Capital Flow Graph core). The packages are technical modules, not separate domain contexts.
+- **`docs/adr/`** at the repo root — read ADRs that touch the area you're about to work in.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
 ## File structure
 
-This is a multi-context repo (presence of `CONTEXT-MAP.md` at the root):
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── packages/
-    ├── backend-ai/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    ├── contracts/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/
-    └── ...
-```
-
-Single-context repos (no `CONTEXT-MAP.md`) instead use a single root `CONTEXT.md` plus `docs/adr/`:
+Single-context repo:
 
 ```
 /
 ├── CONTEXT.md
 ├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
+│   ├── 0001-reframe-as-graph-engineering-platform.md
+│   └── 0002-capital-automation-is-intelligence-first.md
+└── packages/
 ```
+
+Should a part of the domain genuinely diverge later, that is signalled by a `CONTEXT-MAP.md` at the root pointing at per-context `CONTEXT.md` files — don't create it speculatively.
 
 ## Use the glossary's vocabulary
 

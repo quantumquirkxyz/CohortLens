@@ -12,4 +12,4 @@ Use the repo's GitHub labels as-is: `needs-triage`, `needs-info`, `ready-for-age
 
 ### Domain docs
 
-Multi-context: root `CONTEXT-MAP.md` points at per-package `CONTEXT.md` files, with ADRs under `docs/adr/` per context. See `docs/agents/domain.md`.
+Single-context: root `CONTEXT.md` is the source of truth for domain vocabulary, with ADRs under `docs/adr/`. See `docs/agents/domain.md`.
