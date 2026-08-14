@@ -103,6 +103,7 @@ describe('graph repository (integration)', () => {
       chainId: 'ethereum',
       metadata: { txHash: '0xdeadbeef' },
     });
+    if (!created) throw new Error('expected the flow to be created');
     expect(created.id).toBeTruthy();
     expect(created.amount).toBe('42.5');
     expect(created.asset).toBe('USDC');

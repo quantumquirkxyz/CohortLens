@@ -128,6 +128,8 @@ export const capitalFlows = pgTable(
       .references(() => chains.id),
     timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
     metadata: jsonb('metadata').$type<Record<string, unknown> | null>(),
+    /** Subgraph entity id (txHash-logIndex); unique so a re-sync never duplicates a flow. */
+    subgraphId: text('subgraph_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -136,6 +138,7 @@ export const capitalFlows = pgTable(
     index('capital_flows_type_idx').on(t.type),
     index('capital_flows_timestamp_idx').on(t.timestamp),
     index('capital_flows_path_idx').on(t.fromNodeId, t.toNodeId, t.timestamp),
+    unique('capital_flows_subgraph_id_uq').on(t.subgraphId),
   ],
 );
 

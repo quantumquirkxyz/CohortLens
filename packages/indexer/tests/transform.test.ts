@@ -41,6 +41,8 @@ describe('transformFlows', () => {
     });
     expect(f.timestamp).toEqual(new Date(1_700_000_000_000));
     expect(f.metadata).toEqual({ txHash: '0xabc', blockNumber: 200 });
+    // The subgraph entity id travels with the flow so re-syncs dedupe.
+    expect(f.subgraphId).toBe('0xabc-1');
 
     expect(batch.nodes.chains).toEqual([{ id: 'ethereum', name: 'Ethereum' }]);
     expect(batch.nodes.wallets).toEqual([

@@ -120,6 +120,21 @@ describe('db sync store', () => {
     );
   });
 
+  it('counts only newly inserted flows when a re-sync replays a batch', async () => {
+    // First ingest inserts the flow; a replay of the same subgraph ids
+    // dedupes (createFlow returns null) and the store reports 0 inserted.
+    mocks.createFlow
+      .mockResolvedValueOnce({ id: 'flow-1' })
+      .mockResolvedValueOnce(null);
+
+    const store = createDbSyncStore(db);
+    const batch = makeBatch();
+
+    await expect(store.ingest(batch)).resolves.toBe(1);
+    await expect(store.ingest(batch)).resolves.toBe(0);
+    expect(mocks.createFlow).toHaveBeenCalledTimes(2);
+  });
+
   it('reads and writes the sync cursor', async () => {
     const store = createDbSyncStore(db);
     mocks.getSyncCursor.mockResolvedValue(77);

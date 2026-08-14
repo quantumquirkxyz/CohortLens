@@ -50,13 +50,16 @@ function getOrCreateWallet(address: Address): Wallet {
 }
 
 // Asset metadata (symbol/name/decimals) is resolved off-chain in the real
-// integration; the prototype records the token address with placeholders.
+// integration; the prototype records the token address with placeholders. The
+// symbol falls back to the token address so the identity stays unique per
+// token — the sync resolves assets by (symbol, chain), so a constant
+// placeholder would collapse every token onto a single CFG node.
 function getOrCreateAsset(token: Address): Asset {
   let id = token.toHexString();
   let asset = Asset.load(id);
   if (asset === null) {
     asset = new Asset(id);
-    asset.symbol = 'TOKEN';
+    asset.symbol = id;
     asset.name = 'Unknown';
     asset.chain = CHAIN_ID;
     asset.decimals = 18;
@@ -102,40 +105,41 @@ function createFlow(
   flow.save();
 }
 
+// Pool events (Deposit/Borrow/Repay/Withdraw/Swap) share the same shape:
+// sender → pool, with the pool address as the flow counterpart wallet
+// (ADR 006 models the pool's address as the flow counterpart).
+function handlePoolFlow(
+  event: ethereum.Event,
+  flowType: string,
+  sender: Address,
+  poolAddress: Address,
+  token: Address,
+  amount: BigInt,
+): void {
+  let from = getOrCreateWallet(sender);
+  let asset = getOrCreateAsset(token);
+  let pool = getOrCreatePool(poolAddress, asset);
+  createFlow(event, flowType, from, getOrCreateWallet(poolAddress), pool, asset, amount);
+}
+
 export function handleDeposit(event: Deposit): void {
-  let from = getOrCreateWallet(event.params.sender);
-  let asset = getOrCreateAsset(event.params.token);
-  let pool = getOrCreatePool(event.params.pool, asset);
-  // ADR 006 models the pool's address as the flow counterpart wallet.
-  createFlow(event, 'DEPOSIT', from, getOrCreateWallet(event.params.pool), pool, asset, event.params.amount);
+  handlePoolFlow(event, 'DEPOSIT', event.params.sender, event.params.pool, event.params.token, event.params.amount);
 }
 
 export function handleBorrow(event: Borrow): void {
-  let from = getOrCreateWallet(event.params.borrower);
-  let asset = getOrCreateAsset(event.params.token);
-  let pool = getOrCreatePool(event.params.pool, asset);
-  createFlow(event, 'BORROW', from, getOrCreateWallet(event.params.pool), pool, asset, event.params.amount);
+  handlePoolFlow(event, 'BORROW', event.params.borrower, event.params.pool, event.params.token, event.params.amount);
 }
 
 export function handleRepay(event: Repay): void {
-  let from = getOrCreateWallet(event.params.borrower);
-  let asset = getOrCreateAsset(event.params.token);
-  let pool = getOrCreatePool(event.params.pool, asset);
-  createFlow(event, 'REPAY', from, getOrCreateWallet(event.params.pool), pool, asset, event.params.amount);
+  handlePoolFlow(event, 'REPAY', event.params.borrower, event.params.pool, event.params.token, event.params.amount);
 }
 
 export function handleWithdraw(event: Withdraw): void {
-  let from = getOrCreateWallet(event.params.sender);
-  let asset = getOrCreateAsset(event.params.token);
-  let pool = getOrCreatePool(event.params.pool, asset);
-  createFlow(event, 'WITHDRAW', from, getOrCreateWallet(event.params.pool), pool, asset, event.params.amount);
+  handlePoolFlow(event, 'WITHDRAW', event.params.sender, event.params.pool, event.params.token, event.params.amount);
 }
 
 export function handleSwap(event: Swap): void {
-  let from = getOrCreateWallet(event.params.sender);
-  let asset = getOrCreateAsset(event.params.tokenIn);
-  let pool = getOrCreatePool(event.params.pool, asset);
-  createFlow(event, 'SWAP', from, getOrCreateWallet(event.params.pool), pool, asset, event.params.amountIn);
+  handlePoolFlow(event, 'SWAP', event.params.sender, event.params.pool, event.params.tokenIn, event.params.amountIn);
 }
 
 export function handleTransfer(event: Transfer): void {

@@ -86,6 +86,9 @@ export function transformFlows(flows: SubgraphCapitalFlow[]): SyncBatch {
         txHash: flow.transactionHash,
         blockNumber: Number(flow.blockNumber),
       },
+      // Subgraph entity id (txHash-logIndex): the unique business key that
+      // makes a re-sync idempotent (createFlow dedupes on it).
+      subgraphId: flow.id,
     });
   }
 

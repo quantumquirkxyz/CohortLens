@@ -86,15 +86,19 @@ export function createDbSyncStore(db: Db): SyncStore {
       for (const pool of batch.nodes.pools) {
         await ensurePool(db, { ...pool, assetId: assetId(pool.assetId) });
       }
+      // createFlow dedupes on the subgraph entity id, so a re-sync that
+      // replays an already-ingested batch inserts nothing new.
+      let inserted = 0;
       for (const flow of batch.flows) {
-        await createFlow(db, {
+        const created = await createFlow(db, {
           ...flow,
           fromNodeId: walletId(flow.fromNodeId),
           toNodeId: walletId(flow.toNodeId),
           assetId: assetId(flow.assetId),
         });
+        if (created) inserted += 1;
       }
-      return batch.flows.length;
+      return inserted;
     },
   };
 }
