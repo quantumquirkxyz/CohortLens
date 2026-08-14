@@ -9,6 +9,7 @@ import {
   type GraphPort,
 } from '@cohortlens/lenses';
 import { getDb } from './db';
+import { createAnalysisRoutes } from './routes/analysis';
 import { graph } from './routes/graph';
 import { createLensRoutes } from './routes/lenses';
 
@@ -43,3 +44,19 @@ app.route(
     graph: lensGraph,
   }),
 );
+
+const MAX_ANALYSIS_FLOWS = 10_000;
+
+async function loadAllFlows(): Promise<Awaited<ReturnType<typeof listFlows>>> {
+  const all: Awaited<ReturnType<typeof listFlows>> = [];
+  let offset = 0;
+  while (all.length < MAX_ANALYSIS_FLOWS) {
+    const page = await listFlows(getDb(), { limit: 500, offset });
+    all.push(...page);
+    if (page.length < 500) break;
+    offset += 500;
+  }
+  return all.slice(0, MAX_ANALYSIS_FLOWS);
+}
+
+app.route('/api/analysis', createAnalysisRoutes({ loadFlows: loadAllFlows }));
