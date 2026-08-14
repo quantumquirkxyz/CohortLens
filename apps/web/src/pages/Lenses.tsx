@@ -16,6 +16,7 @@ export function Lenses() {
   const registerLens = useRegisterLens();
   const [executingId, setExecutingId] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -28,6 +29,12 @@ export function Lenses() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
+          {actionError ? (
+            <p className="mb-3 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+              {actionError}
+            </p>
+          ) : null}
+
           {lenses.isLoading ? (
             <p className="text-sm text-slate-500">Loading lenses…</p>
           ) : lenses.data ? (
@@ -39,14 +46,26 @@ export function Lenses() {
                   executing={executeLens.isPending && executingId === lens.id}
                   publishing={publishLens.isPending && publishingId === lens.id}
                   onPublish={async () => {
+                    setActionError(null);
                     setPublishingId(lens.id);
-                    await publishLens.mutateAsync(lens.id);
-                    setPublishingId(null);
+                    try {
+                      await publishLens.mutateAsync(lens.id);
+                    } catch (err) {
+                      setActionError(err instanceof Error ? err.message : 'publish failed');
+                    } finally {
+                      setPublishingId(null);
+                    }
                   }}
                   onExecute={async () => {
+                    setActionError(null);
                     setExecutingId(lens.id);
-                    await executeLens.mutateAsync({ lensId: lens.id, params: {} });
-                    setExecutingId(null);
+                    try {
+                      await executeLens.mutateAsync({ lensId: lens.id, params: {} });
+                    } catch (err) {
+                      setActionError(err instanceof Error ? err.message : 'execution failed');
+                    } finally {
+                      setExecutingId(null);
+                    }
                   }}
                 />
               ))}

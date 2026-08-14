@@ -41,6 +41,19 @@ export interface RegisterLensInput {
   price: string;
 }
 
+/** Convert an ISO timestamp (the wire format) into a real Date. */
+function toDate(value: unknown): Date {
+  return typeof value === 'string' ? new Date(value) : (value as Date);
+}
+
+function normalizeFlow(flow: CapitalFlow): CapitalFlow {
+  return { ...flow, timestamp: toDate(flow.timestamp) };
+}
+
+function normalizeResult(result: LensResult): LensResult {
+  return { ...result, generatedAt: toDate(result.generatedAt) };
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     headers: { 'content-type': 'application/json' },
@@ -58,12 +71,18 @@ export const api = {
   // Graph
   getStats: () => request<GraphStats>('/api/graph/stats'),
   getNodes: () => request<{ nodes: GraphNode[] }>('/api/graph/nodes').then((d) => d.nodes),
-  getFlows: (page = 1, limit = 100) =>
-    request<FlowsPage>(`/api/graph/flows?page=${page}&limit=${limit}`),
-  getFlow: (id: string) =>
-    request<CapitalFlow>(`/api/graph/flow/${encodeURIComponent(id)}`),
-  getNeighborhood: (id: string) =>
-    request<NodeNeighborhood>(`/api/graph/neighborhood/${encodeURIComponent(id)}`),
+  getFlows: async (page = 1, limit = 100) => {
+    const data = await request<FlowsPage>(`/api/graph/flows?page=${page}&limit=${limit}`);
+    return { ...data, flows: data.flows.map(normalizeFlow) };
+  },
+  getFlow: async (id: string) => {
+    const flow = await request<CapitalFlow>(`/api/graph/flow/${encodeURIComponent(id)}`);
+    return normalizeFlow(flow);
+  },
+  getNeighborhood: async (id: string) => {
+    const data = await request<NodeNeighborhood>(`/api/graph/neighborhood/${encodeURIComponent(id)}`);
+    return { ...data, flows: data.flows.map(normalizeFlow) };
+  },
 
   // Lenses
   listLenses: () => request<{ lenses: LensDefinition[] }>('/api/lenses').then((d) => d.lenses),
@@ -72,23 +91,29 @@ export const api = {
     request<LensDefinition>('/api/lenses', { method: 'POST', body: JSON.stringify(input) }),
   publishLens: (id: string) =>
     request<LensDefinition>(`/api/lenses/${encodeURIComponent(id)}/publish`, { method: 'POST' }),
-  executeLens: (id: string, params: Record<string, unknown> = {}) =>
-    request<{ result: LensResult }>(`/api/lenses/${encodeURIComponent(id)}/execute`, {
-      method: 'POST',
-      body: JSON.stringify({ params }),
-    }).then((d) => d.result),
-  lensResults: (id: string) =>
-    request<{ result: LensResult }>(`/api/lenses/${encodeURIComponent(id)}/results`).then(
-      (d) => d.result,
-    ),
+  executeLens: async (id: string, params: Record<string, unknown> = {}) => {
+    const data = await request<{ result: LensResult }>(
+      `/api/lenses/${encodeURIComponent(id)}/execute`,
+      { method: 'POST', body: JSON.stringify({ params }) },
+    );
+    return normalizeResult(data.result);
+  },
+  lensResults: async (id: string) => {
+    const data = await request<{ result: LensResult }>(
+      `/api/lenses/${encodeURIComponent(id)}/results`,
+    );
+    return normalizeResult(data.result);
+  },
 
   // Analysis
   getCohorts: () =>
     request<{ cohorts: Cohort[] }>('/api/analysis/communities').then((d) => d.cohorts),
-  findPath: (source: string, target: string) =>
-    request<{ route: Route }>(
+  findPath: async (source: string, target: string) => {
+    const data = await request<{ route: Route }>(
       `/api/analysis/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`,
-    ).then((d) => d.route),
+    );
+    return { ...data.route, steps: data.route.steps.map(normalizeFlow) };
+  },
   getCentrality: () => request<CentralityResult>('/api/analysis/centrality'),
   getCoMovement: (assets?: string[]) =>
     request<{ result: CoMovementResult }>(

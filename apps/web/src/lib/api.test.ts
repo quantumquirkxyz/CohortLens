@@ -57,9 +57,34 @@ describe('api client', () => {
     const result = await api.executeLens('high-risk-wallets', { limit: 5 });
 
     expect(result.lensId).toBe('high-risk-wallets');
+    expect(result.generatedAt).toBeInstanceOf(Date);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({ params: { limit: 5 } });
+  });
+
+  it('getFlows parses ISO timestamps into Date objects', async () => {
+    mockFetchOnce({
+      page: 1,
+      limit: 10,
+      flows: [
+        {
+          id: 'flow-1',
+          from: { id: 'wallet-1', type: 'wallet' },
+          to: { id: 'pool-1', type: 'pool' },
+          type: 'Deposit',
+          amount: '100',
+          asset: 'USDC',
+          chain: 'Ethereum',
+          timestamp: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    });
+
+    const page = await api.getFlows(1, 10);
+
+    expect(page.flows[0]?.timestamp).toBeInstanceOf(Date);
+    expect(page.flows[0]?.timestamp.toISOString()).toBe('2026-01-01T00:00:00.000Z');
   });
 
   it('findPath builds the query string', async () => {
