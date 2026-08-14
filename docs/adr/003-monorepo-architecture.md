@@ -33,9 +33,9 @@ cohortlens/
 │   ├── contracts/              # Foundry project (Solidity)
 │   ├── indexer/                # The Graph subgraph
 │   └── ui/                     # Shared React components
-├── turbo.json                  # Turborepo pipeline config
+├── turbo.json                  # Turborepo task pipeline
 ├── pnpm-workspace.yaml         # Workspace definition
-├── tsconfig.json               # Root TypeScript config
+├── tsconfig.base.json          # Root TypeScript base config
 └── package.json                # Root package.json
 ```
 
