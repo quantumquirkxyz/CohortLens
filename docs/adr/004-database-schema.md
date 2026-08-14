@@ -2,11 +2,16 @@
 
 ## Status
 
-Accepted
+Accepted (updated 2026-08-14: ORM changed from **Prisma** to **Drizzle ORM**
+when implementing issue #8, per `docs/IMPLEMENTATION-PLAN.md` §2.1 — SQL-first,
+no binary engine, better fit for the complex graph queries; Prisma 8 RC had
+breaking changes).
 
 ## Context
 
-The Capital Flow Graph is a directed, temporal, weighted property graph representing value movement in DeFi. It needs to be stored in PostgreSQL with Prisma ORM.
+The Capital Flow Graph is a directed, temporal, weighted property graph
+representing value movement in DeFi. It needs to be stored in PostgreSQL with
+the Drizzle ORM.
 
 **Node types**: Wallet, Protocol, Chain, Asset, Pool, Position
 **Edge types**: Deposit, Borrow, Repay, Withdraw, Swap, Transfer
@@ -14,182 +19,115 @@ The Capital Flow Graph is a directed, temporal, weighted property graph represen
 
 ## Decision
 
-Use **adjacency list schema** with typed node and edge tables.
+Use **adjacency list schema** with typed node and edge tables (Drizzle).
 
 ### Schema Design
 
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
+```typescript
+// packages/database/src/schema.ts (abridged — see the file for the full schema)
+import { pgEnum, pgTable, text, numeric, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+export const nodeTypeEnum = pgEnum('node_type', [
+  'wallet', 'protocol', 'chain', 'asset', 'pool', 'position',
+]);
+export const flowTypeEnum = pgEnum('flow_type', [
+  'Deposit', 'Borrow', 'Repay', 'Withdraw', 'Swap', 'Transfer',
+]);
 
-// === NODES ===
+export const chains = pgTable('chains', {
+  id: text('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  rpcUrl: text('rpc_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
-model Chain {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  rpcUrl    String?
-  createdAt DateTime @default(now())
+// ... protocols, wallets, assets, pools, positions (node tables)
 
-  protocols Protocol[]
-  assets    Asset[]
-}
-
-model Protocol {
-  id        String   @id @default(uuid())
-  name      String
-  chainId   String
-  chain     Chain    @relation(fields: [chainId], references: [id])
-  createdAt DateTime @default(now())
-
-  pools Pool[]
-}
-
-model Wallet {
-  id        String   @id @default(uuid())
-  address   String   @unique
-  label     String?
-  createdAt DateTime @default(now())
-
-  positions Position[]
-}
-
-model Asset {
-  id        String   @id @default(uuid())
-  symbol    String
-  name      String
-  chainId   String
-  chain     Chain    @relation(fields: [chainId], references: [id])
-  decimals  Int      @default(18)
-  createdAt DateTime @default(now())
-
-  pools Pool[]
-}
-
-model Pool {
-  id         String   @id @default(uuid())
-  protocolId String
-  protocol   Protocol @relation(fields: [protocolId], references: [id])
-  assetId    String
-  asset      Asset    @relation(fields: [assetId], references: [id])
-  address    String?
-  createdAt  DateTime @default(now())
-
-  positions Position[]
-}
-
-model Position {
-  id        String   @id @default(uuid())
-  walletId  String
-  wallet    Wallet   @relation(fields: [walletId], references: [id])
-  poolId    String
-  pool      Pool     @relation(fields: [poolId], references: [id])
-  amount    Decimal  @db.Decimal(36, 18)
-  type      String   // "deposit" | "borrow"
-  createdAt DateTime @default(now())
-
-  @@unique([walletId, poolId, type])
-}
-
-// === EDGES (Capital Flows) ===
-
-model CapitalFlow {
-  id        String   @id @default(uuid())
-  type      FlowType
-  fromWallet String
-  toWallet   String
-  poolId    String?
-  amount    Decimal  @db.Decimal(36, 18)
-  weight    Float    @default(1.0)
-  timestamp DateTime
-  createdAt DateTime @default(now())
-
-  pool Pool? @relation(fields: [poolId], references: [id])
-
-  @@index([fromWallet])
-  @@index([toWallet])
-  @@index([timestamp])
-  @@index([type])
-  @@index([fromWallet, toWallet, timestamp])
-}
-
-enum FlowType {
-  Deposit
-  Borrow
-  Repay
-  Withdraw
-  Swap
-  Transfer
-}
+export const capitalFlows = pgTable('capital_flows', {
+  id: text('id').primaryKey().defaultRandom(),
+  fromNodeId: text('from_node_id').notNull(),
+  fromNodeType: nodeTypeEnum('from_node_type').notNull(),
+  toNodeId: text('to_node_id').notNull(),
+  toNodeType: nodeTypeEnum('to_node_type').notNull(),
+  type: flowTypeEnum('type').notNull(),
+  amount: numeric('amount', { precision: 36, scale: 18 }).notNull(),
+  assetId: text('asset_id').notNull(),
+  chainId: text('chain_id').notNull(),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
+  metadata: jsonb('metadata'),
+});
 ```
 
 ### Indexes for Graph Queries
 
 ```sql
--- Traversal performance
-CREATE INDEX idx_capital_flow_from ON "CapitalFlow"("fromWallet");
-CREATE INDEX idx_capital_flow_to ON "CapitalFlow"("toWallet");
-CREATE INDEX idx_capital_flow_type ON "CapitalFlow"(type);
-CREATE INDEX idx_capital_flow_timestamp ON "CapitalFlow"(timestamp);
+CREATE INDEX idx_capital_flow_from ON capital_flows (from_node_id);
+CREATE INDEX idx_capital_flow_to ON capital_flows (to_node_id);
+CREATE INDEX idx_capital_flow_type ON capital_flows (type);
+CREATE INDEX idx_capital_flow_timestamp ON capital_flows (timestamp);
 
 -- Composite index for path queries
-CREATE INDEX idx_capital_flow_path ON "CapitalFlow"("fromWallet", "toWallet", timestamp);
+CREATE INDEX idx_capital_flow_path ON capital_flows (from_node_id, to_node_id, timestamp);
 
--- Materialized view for second-degree connections
-CREATE MATERIALIZED VIEW wallet_2nd_degree AS
-SELECT DISTINCT f1."fromWallet" AS wallet_id, f2."toWallet" AS connected_to
-FROM "CapitalFlow" f1
-JOIN "CapitalFlow" f2 ON f1."toWallet" = f2."fromWallet"
-WHERE f1."fromWallet" <> f2."toWallet";
-
-CREATE INDEX idx_2nd_degree ON wallet_2nd_degree(wallet_id);
+-- Materialized view for second-degree connections (deferred to Fase 3)
+-- CREATE MATERIALIZED VIEW wallet_2nd_degree AS ...
 ```
 
 ## Alternatives Considered
 
 ### Single JSONB Graph Table
-```prisma
-model Graph {
-  id     String @id @default(uuid())
-  nodes  Json
-  edges  Json
-}
+
+```typescript
+const graph = pgTable('graph', {
+  id: text('id').primaryKey(),
+  nodes: jsonb('nodes'),
+  edges: jsonb('edges'),
+});
 ```
+
 - **Pros**: Flexible, easy to add new node/edge types
 - **Cons**: No referential integrity, harder to query, no indexes on properties
 
 ### Apache AGE (PostgreSQL Graph Extension)
+
 - **Pros**: Native graph queries (Cypher), LPG support
-- **Cons**: Extra dependency, less mature, Prisma integration issues
+- **Cons**: Extra dependency, less mature, Drizzle integration issues
 
 ### Separate Node/Edge Tables per Type
+
 - **Pros**: Strong typing, better indexes
 - **Cons**: Many tables, complex joins, harder to extend
 
 ### Adjacency List (Chosen)
-- **Pros**: Standard pattern, good performance with indexes, Prisma-friendly
+
+- **Pros**: Standard pattern, good performance with indexes, Drizzle-friendly
 - **Cons**: More complex queries for multi-hop traversal
+
+### Prisma vs Drizzle
+
+Prisma was originally selected (this ADR's first version). It was replaced by
+Drizzle when implementing issue #8 because: Drizzle is SQL-first (closer to
+native SQL, better for the complex graph JOINs), has no binary engine
+(lighter, serverless/edge-friendly), derives types from the schema without
+codegen, and avoids Prisma 8's breaking changes (RC at the time).
 
 ## Consequences
 
 ### Positive
-- Strong referential integrity via foreign keys
-- Prisma ORM works seamlessly
+
+- Strong referential integrity via foreign keys on the node tables
+- Drizzle derives TypeScript types straight from the schema (no codegen)
 - Indexes enable fast traversal queries
-- Materialized views for expensive graph computations
+- Materialized views for expensive graph computations (Fase 3)
 
 ### Negative
+
 - Multi-hop queries require recursive CTEs
 - Need to maintain materialized views
-- Schema changes require migrations
+- Schema changes require migrations (`drizzle-kit generate` / `migrate`)
 
 ## References
 
-- [Prisma Relations](https://www.prisma.io/docs/orm/prisma-schema/data-model/relations)
+- [Drizzle ORM](https://orm.drizzle.team)
 - [Graph Queries in PostgreSQL](https://viprasol.com/blog/postgres-graph-queries/)
-- [Translate Graph DB to Prisma](https://spin.atomicobject.com/migrate-graph-database/)
+- [docs/IMPLEMENTATION-PLAN.md §2.1](IMPLEMENTATION-PLAN.md)

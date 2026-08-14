@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { APP_NAME } from '@cohortlens/shared';
+import { graph } from './routes/graph';
 
 export const app = new Hono();
 
@@ -13,3 +14,5 @@ app.get('/', (c) =>
 );
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
+
+app.route('/api/graph', graph);

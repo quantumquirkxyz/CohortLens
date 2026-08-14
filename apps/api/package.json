@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@cohortlens/database": "workspace:*",
     "@cohortlens/shared": "workspace:*",
     "@hono/node-server": "^2.1.1",
     "hono": "^4.13.2"
