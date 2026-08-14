@@ -26,6 +26,9 @@ importers:
       '@cohortlens/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@cohortlens/lenses':
+        specifier: workspace:*
+        version: link:../../packages/lenses
       '@cohortlens/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -110,6 +113,19 @@ importers:
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12))
+
+  packages/lenses:
+    dependencies:
+      '@cohortlens/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

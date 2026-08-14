@@ -70,3 +70,46 @@ export interface GraphNode {
   id: string;
   label: string;
 }
+
+/** Categories of Lenses (CONTEXT.md — Lens). */
+export const LENS_TYPES = ['ml_model', 'graph_query', 'risk_signal'] as const;
+
+export type LensType = (typeof LENS_TYPES)[number];
+
+/**
+ * A registered, priced capability that answers a question about the Capital
+ * Flow Graph (CONTEXT.md — Lens). `price` is LENS per query, numeric-as-string.
+ */
+export interface LensDefinition {
+  id: string;
+  name: string;
+  type: LensType;
+  description: string;
+  /** Loose description of accepted parameters (prototype; JSON Schema later). */
+  inputSchema: Record<string, unknown>;
+  /** LENS per query, numeric-as-string. */
+  price: string;
+  active: boolean;
+}
+
+/** The kinds of Signals a Lens can produce (CONTEXT.md — Signal). */
+export const SIGNAL_KINDS = ['risk', 'liquidity', 'recommendation'] as const;
+
+export type SignalKind = (typeof SIGNAL_KINDS)[number];
+
+/** A single typed observation produced by a Lens. */
+export interface LensFinding {
+  walletId: string;
+  /** Normalized 0..1 heuristic score. */
+  score: number;
+  reasons: string[];
+}
+
+/** The output of a Lens execution (a Signal, Prediction, or Route). */
+export interface LensResult {
+  lensId: string;
+  signal: SignalKind;
+  generatedAt: Date;
+  findings: LensFinding[];
+  summary: string;
+}

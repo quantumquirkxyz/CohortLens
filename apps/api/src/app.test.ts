@@ -207,3 +207,122 @@ describe('CohortLens API', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('CohortLens API — lenses', () => {
+  const walletFlow = {
+    id: 'lens-flow-1',
+    from: { id: 'wallet-9', type: 'wallet' },
+    to: { id: 'aave-v3-usdc-ethereum', type: 'pool' },
+    type: 'Borrow',
+    amount: '5000',
+    asset: 'USDC',
+    chain: 'Ethereum',
+    timestamp: '2026-08-01T00:00:00.000Z',
+    metadata: null,
+  };
+
+  beforeEach(() => {
+    mockListFlows.mockResolvedValue([walletFlow]);
+  });
+
+  it('lists the built-in lenses', async () => {
+    const res = await app.request('/api/lenses');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { lenses: Array<{ id: string }> };
+    expect(body.lenses.some((l) => l.id === 'high-risk-wallets')).toBe(true);
+  });
+
+  it('returns a single lens by id', async () => {
+    const res = await app.request('/api/lenses/high-risk-wallets');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { id: string; type: string };
+    expect(body.id).toBe('high-risk-wallets');
+    expect(body.type).toBe('risk_signal');
+  });
+
+  it('returns 404 for an unknown lens', async () => {
+    const res = await app.request('/api/lenses/nope');
+    expect(res.status).toBe(404);
+  });
+
+  it('registers a new lens and rejects duplicates', async () => {
+    const definition = {
+      id: 'test-registered-lens',
+      name: 'Test Lens',
+      type: 'graph_query',
+      description: 'registered via the API',
+      inputSchema: { q: 'string' },
+      price: '3',
+    };
+    const res = await app.request('/api/lenses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(definition),
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { id: string; active: boolean };
+    expect(body.id).toBe('test-registered-lens');
+    expect(body.active).toBe(false);
+
+    const dup = await app.request('/api/lenses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(definition),
+    });
+    expect(dup.status).toBe(409);
+  });
+
+  it('rejects an invalid lens definition', async () => {
+    const res = await app.request('/api/lenses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: 'x', type: 'not-a-type' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('publishes a lens and 404s on unknown ids', async () => {
+    const res = await app.request('/api/lenses/test-registered-lens/publish', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { active: boolean }).active).toBe(true);
+
+    const missing = await app.request('/api/lenses/nope/publish', { method: 'POST' });
+    expect(missing.status).toBe(404);
+  });
+
+  it('executes the built-in lens against graph flows', async () => {
+    const res = await app.request('/api/lenses/high-risk-wallets/execute', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ params: { limit: 1 } }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      result: { lensId: string; signal: string; findings: Array<{ walletId: string }> };
+    };
+    expect(body.result.lensId).toBe('high-risk-wallets');
+    expect(body.result.signal).toBe('risk');
+    expect(body.result.findings[0]!.walletId).toBe('wallet-9');
+  });
+
+  it('returns the latest execution results for a lens', async () => {
+    const missing = await app.request('/api/lenses/test-registered-lens/results');
+    expect(missing.status).toBe(404);
+
+    const res = await app.request('/api/lenses/high-risk-wallets/results');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { result: { lensId: string } };
+    expect(body.result.lensId).toBe('high-risk-wallets');
+  });
+
+  it('returns 404 when executing an unknown lens', async () => {
+    const res = await app.request('/api/lenses/nope/execute', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ params: {} }),
+    });
+    expect(res.status).toBe(404);
+  });
+});
