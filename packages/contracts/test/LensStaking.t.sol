@@ -96,21 +96,24 @@ contract LensStakingTest is Test {
         staking.withdraw(STAKE + 1);
     }
 
-    function test_bonusApyForLockTiers() public view {
-        assertEq(staking.bonusApyForLock(0), 0);
-
-        uint256 current = block.timestamp;
-        assertEq(staking.bonusApyForLock(current + 30 days), 100);
-        assertEq(staking.bonusApyForLock(current + 90 days), 300);
-        assertEq(staking.bonusApyForLock(current + 180 days), 500);
+    function test_lockBonusBpsTiers() public view {
+        assertEq(staking.lockBonusBps(30), 100);
+        assertEq(staking.lockBonusBps(90), 300);
+        assertEq(staking.lockBonusBps(180), 500);
     }
 
-    function test_longLockEarnsTenPercentPerYear() public {
+    function test_lockBonusBpsRevertsInvalid() public {
+        vm.expectRevert("LensStaking: invalid lock duration");
+        staking.lockBonusBps(15);
+    }
+
+    function test_longLockEarnsBonusForLockedWindowOnly() public {
         staking.stake(STAKE, 180);
         vm.warp(block.timestamp + 365 days);
 
-        // 5% base + 5% bonus = 10% APY.
-        assertApproxEqRel(staking.pendingRewards(staker), (STAKE * 10) / 100, 0.001e18);
+        // 5% base for the full year + 5% bonus only for the 180-day locked window.
+        uint256 expected = (STAKE * 500 * 365 days) / (10000 * 365 days) + (STAKE * 500 * 180 days) / (10000 * 365 days);
+        assertApproxEqRel(staking.pendingRewards(staker), expected, 0.001e18);
     }
 
     function test_restakeExtendsLock() public {
@@ -123,5 +126,22 @@ contract LensStakingTest is Test {
         // 180-day lock from the second stake overrides the shorter remaining one.
         assertEq(s.bonusApyBps, 500);
         assertGe(s.lockEnd, block.timestamp + 180 days);
+    }
+
+    function test_topUpDuringLockKeepsCommittedBonus() public {
+        staking.stake(STAKE, 90); // commits 300 bps
+
+        vm.warp(block.timestamp + 80 days);
+        staking.stake(1, 0); // unrelated no-lock top-up
+
+        ILensStaking.StakeInfo memory s = staking.getStake(staker);
+        assertEq(s.bonusApyBps, 300, "committed tier survives unrelated top-up");
+    }
+
+    function test_bonusStopsAfterLockExpiry() public {
+        staking.stake(STAKE, 30);
+        vm.warp(block.timestamp + 40 days); // 10 days past the lock end        // Base for the full 40 days, bonus (100 bps tier) only for the 30-day locked window.
+        uint256 expected = (STAKE * 500 * 40 days) / (10000 * 365 days) + (STAKE * 100 * 30 days) / (10000 * 365 days);
+        assertApproxEqRel(staking.pendingRewards(staker), expected, 0.001e18);
     }
 }

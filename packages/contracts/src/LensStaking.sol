@@ -7,18 +7,17 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ILensStaking} from "./interfaces/ILensStaking.sol";
 
 /// @title LensStaking
-/// @notice Stake LENS to earn rewards. Base APY is 5% (ADR 008); locking the
-///         stake for 30/90/180 days adds up to 5% bonus APY. Rewards accrue
-///         per-second on the current principal, so a stake is fully liquid
-///         (principal + rewards) once its lock has ended.
+/// @notice Stake LENS to earn rewards. Base APY is 5% (ADR 008); committing a
+///         30/90/180-day lock earns a tier bonus (up to 5% APY) for the locked
+///         period. Rewards accrue per-second: base APY always, bonus APY only
+///         while a lock is active, so the tier is fixed by the commitment and
+///         is never affected by unrelated stake/withdraw events.
 contract LensStaking is ILensStaking, Ownable {
     using SafeERC20 for IERC20;
 
     /// @dev Base 5% APY in basis points (ADR 008).
     uint256 public constant BASE_APY_BPS = 500;
     uint256 public constant SECONDS_PER_YEAR = 365 days;
-    /// @dev Reward precision multiplier to avoid rounding dust on short timespans.
-    uint256 public constant PRECISION = 1e12;
 
     IERC20 public immutable lensToken;
 
@@ -33,12 +32,14 @@ contract LensStaking is ILensStaking, Ownable {
         lensToken = IERC20(lensToken_);
     }
 
-    /// @notice Stake `amount` LENS. `lockDays` must be 0, 30, 90 or 180; a lock
-    ///         extends the current lock end (if any) and sets the bonus APY.
-    ///         Rewards already accrued before this call are kept.
+    /// @notice Stake `amount` LENS. `lockDays` must be 0, 30, 90 or 180. A lock
+    ///         extends the current lock end and sets the committed bonus tier
+    ///         (kept if a later tier is lower); rewards accrued before this
+    ///         call are preserved.
     function stake(uint256 amount, uint256 lockDays) external override {
         require(amount > 0, "LensStaking: zero amount");
-        require(_validLock(lockDays), "LensStaking: invalid lock duration");
+        (uint256 tierBonus, bool valid) = _lockTier(lockDays);
+        require(lockDays == 0 || valid, "LensStaking: invalid lock duration");
 
         StakeInfo storage s = _stakes[msg.sender];
         _accrue(msg.sender);
@@ -50,8 +51,12 @@ contract LensStaking is ILensStaking, Ownable {
         if (lockDays > 0) {
             uint256 lockEnd = block.timestamp + lockDays * 1 days;
             s.lockEnd = lockEnd > s.lockEnd ? lockEnd : s.lockEnd;
+            // The committed tier never regresses from unrelated events.
+            if (tierBonus > s.bonusApyBps) s.bonusApyBps = tierBonus;
+        } else if (s.lockEnd == 0 || _lockExpired(s.lockEnd)) {
+            // No lock in force: clear any stale committed bonus.
+            s.bonusApyBps = 0;
         }
-        s.bonusApyBps = _bonusForLock(s.lockEnd);
 
         emit Staked(msg.sender, amount, lockDays);
     }
@@ -68,7 +73,8 @@ contract LensStaking is ILensStaking, Ownable {
 
         s.amount -= amount;
         totalStaked -= amount;
-        s.bonusApyBps = _bonusForLock(s.lockEnd);
+        // Withdrawing requires the lock to have ended, so no bonus remains.
+        s.bonusApyBps = 0;
         lensToken.safeTransfer(msg.sender, amount);
 
         emit Withdrawn(msg.sender, amount);
@@ -92,19 +98,19 @@ contract LensStaking is ILensStaking, Ownable {
         StakeInfo storage s = _stakes[staker];
         // Accrued-but-unclaimed rewards must survive a full withdrawal.
         if (s.amount == 0) return s.rewards;
-
-        uint256 elapsed = block.timestamp - s.lastUpdate;
-        uint256 annualRateBps = BASE_APY_BPS + s.bonusApyBps;
-        return s.rewards + (s.amount * annualRateBps * elapsed * PRECISION) / (10000 * SECONDS_PER_YEAR * PRECISION);
+        return s.rewards + _computeRewards(s, s.lastUpdate, block.timestamp);
     }
 
     function getStake(address staker) external view override returns (StakeInfo memory) {
         return _stakes[staker];
     }
 
-    /// @notice Bonus APY (bps) for a lock end: 30d -> 1%, 90d -> 3%, 180d -> 5%.
-    function bonusApyForLock(uint256 lockEnd) public view returns (uint256) {
-        return _bonusForLock(lockEnd);
+    /// @notice Bonus APY (bps) for a lock duration: 30d -> 1%, 90d -> 3%,
+    ///         180d -> 5% (ADR 008). Reverts for unsupported durations.
+    function lockBonusBps(uint256 lockDays) public pure returns (uint256) {
+        (uint256 bonusBps, bool valid) = _lockTier(lockDays);
+        require(valid, "LensStaking: invalid lock duration");
+        return bonusBps;
     }
 
     function _accrue(address staker) private {
@@ -113,26 +119,35 @@ contract LensStaking is ILensStaking, Ownable {
             s.lastUpdate = block.timestamp;
             return;
         }
-        s.rewards += _computeRewards(s, block.timestamp - s.lastUpdate);
+        s.rewards += _computeRewards(s, s.lastUpdate, block.timestamp);
         s.lastUpdate = block.timestamp;
     }
 
-    function _computeRewards(StakeInfo storage s, uint256 elapsed) private view returns (uint256) {
-        uint256 annualRateBps = BASE_APY_BPS + s.bonusApyBps;
-        return (s.amount * annualRateBps * elapsed * PRECISION) / (10000 * SECONDS_PER_YEAR * PRECISION);
+    /// @dev Base rewards for the whole [from, to] window plus the committed
+    ///      tier bonus only for the part of the window inside an active lock.
+    function _computeRewards(StakeInfo storage s, uint256 from, uint256 to) private view returns (uint256) {
+        uint256 base = (s.amount * BASE_APY_BPS * (to - from)) / (10000 * SECONDS_PER_YEAR);
+
+        uint256 bonusEnd = s.lockEnd;
+        if (bonusEnd <= from || bonusEnd > to) {
+            bonusEnd = bonusEnd > to ? to : from;
+        }
+        uint256 bonus = (s.amount * s.bonusApyBps * (bonusEnd - from)) / (10000 * SECONDS_PER_YEAR);
+
+        return base + bonus;
     }
 
-    function _bonusForLock(uint256 lockEnd) private view returns (uint256) {
-        // forge-lint: disable-next-line(block-timestamp) -- remaining-lock bonus tiering, standard for time-based staking
-        if (lockEnd == 0 || block.timestamp >= lockEnd) return 0;
-        uint256 daysLocked = (lockEnd - block.timestamp) / 1 days;
-        if (daysLocked >= 180) return 500;
-        if (daysLocked >= 90) return 300;
-        if (daysLocked >= 30) return 100;
-        return 0;
+    function _lockExpired(uint256 lockEnd) private view returns (bool) {
+        // forge-lint: disable-next-line(block-timestamp) -- lock expiry check, standard for time-based staking
+        return lockEnd != 0 && block.timestamp >= lockEnd;
     }
 
-    function _validLock(uint256 lockDays) private pure returns (bool) {
-        return lockDays == 0 || lockDays == 30 || lockDays == 90 || lockDays == 180;
+    /// @dev Single source of truth for lock tiers (ADR 008). Unsupported
+    ///      durations return valid=false instead of a bonus.
+    function _lockTier(uint256 lockDays) private pure returns (uint256 bonusBps, bool valid) {
+        if (lockDays == 30) return (100, true);
+        if (lockDays == 90) return (300, true);
+        if (lockDays == 180) return (500, true);
+        return (0, false);
     }
 }
