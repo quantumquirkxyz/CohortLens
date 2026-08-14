@@ -33,6 +33,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm type-check
+      # e2e/ is not a workspace, so turbo's type-check skips it — check it
+      # explicitly so spec/config type errors surface in CI.
+      - run: npx tsc -p e2e/tsconfig.json
 
   test:
     runs-on: ubuntu-latest

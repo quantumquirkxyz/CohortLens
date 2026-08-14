@@ -1,10 +1,8 @@
 import { defineConfig } from 'vitest/config';
+import { coverageThresholds } from '../../vitest.base.config';
 
 export default defineConfig({
   test: {
-    coverage: {
-      provider: 'v8',
-      thresholds: { statements: 80, lines: 80 },
-    },
+    ...coverageThresholds,
   },
 });

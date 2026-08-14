@@ -7,6 +7,7 @@
  */
 export * from './schema';
 export { createDb, type Db } from './client';
+export { bootstrapTestDatabase } from './test-utils';
 export {
   ensureAsset,
   ensureChain,
