@@ -16,5 +16,6 @@ export {
   listNodes,
   type CreateCapitalFlowInput,
   type GraphStats,
+  type ListFlowsOptions,
   type NodeNeighborhood,
 } from './graph';

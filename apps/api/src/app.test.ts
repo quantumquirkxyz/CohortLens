@@ -88,10 +88,32 @@ describe('CohortLens API', () => {
     expect(mockListNodes).toHaveBeenCalledTimes(1);
   });
 
-  it('lists graph flows', async () => {
+  it('lists graph flows with pagination metadata', async () => {
     const res = await app.request('/api/graph/flows');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ flows: [sampleFlow] });
+    expect(await res.json()).toEqual({ flows: [sampleFlow], page: 1, limit: 100 });
+    expect(mockListFlows).toHaveBeenCalledWith(expect.anything(), {
+      limit: 100,
+      offset: 0,
+    });
+  });
+
+  it('pages through flows with limit and page query params', async () => {
+    const res = await app.request('/api/graph/flows?limit=5&page=2');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ flows: [sampleFlow], page: 2, limit: 5 });
+    expect(mockListFlows).toHaveBeenCalledWith(expect.anything(), {
+      limit: 5,
+      offset: 5,
+    });
+  });
+
+  it('clamps the limit query param to the max page size', async () => {
+    await app.request('/api/graph/flows?limit=9999');
+    expect(mockListFlows).toHaveBeenCalledWith(expect.anything(), {
+      limit: 500,
+      offset: 0,
+    });
   });
 
   it('returns a single flow by id', async () => {

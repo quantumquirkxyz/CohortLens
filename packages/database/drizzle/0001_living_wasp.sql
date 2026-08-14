@@ -1,0 +1,2 @@
+CREATE TYPE "public"."position_type" AS ENUM('deposit', 'borrow');--> statement-breakpoint
+ALTER TABLE "positions" ALTER COLUMN "type" SET DATA TYPE "public"."position_type" USING "type"::"public"."position_type";

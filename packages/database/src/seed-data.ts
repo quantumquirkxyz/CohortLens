@@ -66,7 +66,13 @@ export const seedPools = [
   { id: 'balancer-weth-ethereum', protocolId: 'balancer', assetId: 'weth', chainId: 'ethereum' },
 ];
 
-export const seedPositions = [
+export const seedPositions: Array<{
+  id: string;
+  walletId: string;
+  poolId: string;
+  amount: string;
+  type: 'deposit' | 'borrow';
+}> = [
   { id: 'pos-1', walletId: 'wallet-1', poolId: 'aave-v3-usdc-ethereum', amount: '250000', type: 'deposit' },
   { id: 'pos-2', walletId: 'wallet-2', poolId: 'aave-v3-usdc-ethereum', amount: '1000000', type: 'deposit' },
   { id: 'pos-3', walletId: 'wallet-3', poolId: 'aave-v3-weth-ethereum', amount: '80', type: 'deposit' },

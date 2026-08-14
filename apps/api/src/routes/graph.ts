@@ -19,8 +19,14 @@ graph.get('/nodes', async (c) => {
 });
 
 graph.get('/flows', async (c) => {
-  const flows = await listFlows(getDb());
-  return c.json({ flows });
+  const limitParam = c.req.query('limit');
+  const pageParam = c.req.query('page');
+  const limit = limitParam
+    ? Math.min(Math.max(Number.parseInt(limitParam, 10) || 100, 1), 500)
+    : 100;
+  const page = pageParam ? Math.max(Number.parseInt(pageParam, 10) || 1, 1) : 1;
+  const flows = await listFlows(getDb(), { limit, offset: (page - 1) * limit });
+  return c.json({ flows, page, limit });
 });
 
 graph.get('/flow/:id', async (c) => {

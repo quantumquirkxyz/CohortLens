@@ -87,6 +87,23 @@ function toCapitalFlow(row: FlowRow): CapitalFlow {
   };
 }
 
+interface NodeRow {
+  id: string;
+  label?: string | null;
+  address?: string | null;
+  name?: string | null;
+  symbol?: string | null;
+}
+
+/** Map a node-table row to a GraphNode using its display label. */
+function toGraphNode(type: NodeType, row: NodeRow): GraphNode {
+  return {
+    type,
+    id: row.id,
+    label: row.label ?? row.address ?? row.name ?? row.symbol ?? row.id,
+  };
+}
+
 export async function listNodes(db: Db): Promise<GraphNode[]> {
   const [chainRows, protocolRows, walletRows, assetRows, poolRows, positionRows] =
     await Promise.all([
@@ -99,31 +116,32 @@ export async function listNodes(db: Db): Promise<GraphNode[]> {
     ]);
 
   return [
-    ...chainRows.map((r) => ({ type: 'chain' as const, id: r.id, label: r.name })),
-    ...protocolRows.map((r) => ({
-      type: 'protocol' as const,
-      id: r.id,
-      label: r.name,
-    })),
-    ...walletRows.map((r) => ({
-      type: 'wallet' as const,
-      id: r.id,
-      label: r.label ?? r.address,
-    })),
-    ...assetRows.map((r) => ({ type: 'asset' as const, id: r.id, label: r.symbol })),
-    ...poolRows.map((r) => ({ type: 'pool' as const, id: r.id, label: r.id })),
-    ...positionRows.map((r) => ({
-      type: 'position' as const,
-      id: r.id,
-      label: r.id,
-    })),
+    ...chainRows.map((r) => toGraphNode('chain', r)),
+    ...protocolRows.map((r) => toGraphNode('protocol', r)),
+    ...walletRows.map((r) => toGraphNode('wallet', r)),
+    ...assetRows.map((r) => toGraphNode('asset', r)),
+    ...poolRows.map((r) => toGraphNode('pool', r)),
+    ...positionRows.map((r) => toGraphNode('position', r)),
   ];
 }
 
-export async function listFlows(db: Db, limit = 100): Promise<CapitalFlow[]> {
+export interface ListFlowsOptions {
+  /** Page size, default 100, capped at 500. */
+  limit?: number;
+  /** Rows to skip, default 0. */
+  offset?: number;
+}
+
+export async function listFlows(
+  db: Db,
+  opts: ListFlowsOptions = {},
+): Promise<CapitalFlow[]> {
+  const limit = Math.min(Math.max(opts.limit ?? 100, 1), 500);
+  const offset = Math.max(opts.offset ?? 0, 0);
   const rows = await flowQuery(db)
     .orderBy(desc(capitalFlows.timestamp))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
   return rows.map(toCapitalFlow);
 }
 
@@ -213,32 +231,30 @@ export async function getNeighborhood(
 
 async function findNode(db: Db, id: string): Promise<GraphNode | null> {
   const [chainRow] = await db.select().from(chains).where(eq(chains.id, id)).limit(1);
-  if (chainRow) return { type: 'chain', id: chainRow.id, label: chainRow.name };
+  if (chainRow) return toGraphNode('chain', chainRow);
 
   const [protocolRow] = await db
     .select()
     .from(protocols)
     .where(eq(protocols.id, id))
     .limit(1);
-  if (protocolRow) return { type: 'protocol', id: protocolRow.id, label: protocolRow.name };
+  if (protocolRow) return toGraphNode('protocol', protocolRow);
 
   const [walletRow] = await db.select().from(wallets).where(eq(wallets.id, id)).limit(1);
-  if (walletRow) {
-    return { type: 'wallet', id: walletRow.id, label: walletRow.label ?? walletRow.address };
-  }
+  if (walletRow) return toGraphNode('wallet', walletRow);
 
   const [assetRow] = await db.select().from(assets).where(eq(assets.id, id)).limit(1);
-  if (assetRow) return { type: 'asset', id: assetRow.id, label: assetRow.symbol };
+  if (assetRow) return toGraphNode('asset', assetRow);
 
   const [poolRow] = await db.select().from(pools).where(eq(pools.id, id)).limit(1);
-  if (poolRow) return { type: 'pool', id: poolRow.id, label: poolRow.id };
+  if (poolRow) return toGraphNode('pool', poolRow);
 
   const [positionRow] = await db
     .select()
     .from(positions)
     .where(eq(positions.id, id))
     .limit(1);
-  if (positionRow) return { type: 'position', id: positionRow.id, label: positionRow.id };
+  if (positionRow) return toGraphNode('position', positionRow);
 
   return null;
 }

@@ -32,12 +32,12 @@ describe('graph repository (integration)', () => {
     expect(nodes.filter((n) => n.type === 'asset')).toHaveLength(10);
     expect(nodes.filter((n) => n.type === 'wallet')).toHaveLength(8);
 
-    const flows = await listFlows(db, 200);
+    const flows = await listFlows(db, { limit: 200 });
     expect(flows.length).toBeGreaterThanOrEqual(50);
   });
 
   it('lists flows with resolved asset, chain, and typed endpoints', async () => {
-    const flows = await listFlows(db, 5);
+    const flows = await listFlows(db, { limit: 5 });
     expect(flows.length).toBeGreaterThan(0);
     for (const flow of flows) {
       expect(flow.asset).toBeTruthy();
@@ -49,7 +49,7 @@ describe('graph repository (integration)', () => {
   });
 
   it('fetches a single flow by id', async () => {
-    const flows = await listFlows(db, 1);
+    const flows = await listFlows(db, { limit: 1 });
     const expected = flows[0];
     expect(expected).toBeDefined();
     const got = await getFlow(db, expected!.id);
@@ -72,7 +72,7 @@ describe('graph repository (integration)', () => {
   });
 
   it('returns the neighborhood of a wallet node', async () => {
-    const flows = await listFlows(db, 200);
+    const flows = await listFlows(db, { limit: 200 });
     const walletFlow = flows.find((f) => f.from.type === 'wallet');
     expect(walletFlow).toBeDefined();
     const ref = walletFlow!.from;

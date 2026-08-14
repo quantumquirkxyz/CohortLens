@@ -17,6 +17,7 @@ import { FLOW_TYPES, NODE_TYPES } from '@cohortlens/shared';
 
 export const nodeTypeEnum = pgEnum('node_type', NODE_TYPES);
 export const flowTypeEnum = pgEnum('flow_type', FLOW_TYPES);
+export const positionTypeEnum = pgEnum('position_type', ['deposit', 'borrow']);
 
 // === NODES ===
 
@@ -92,8 +93,8 @@ export const positions = pgTable(
       .notNull()
       .references(() => pools.id),
     amount: numeric('amount', { precision: 36, scale: 18 }).notNull(),
-    /** 'deposit' | 'borrow' — the wallet's exposure on the pool. */
-    type: text('type').notNull(),
+    /** The wallet's exposure on the pool: 'deposit' | 'borrow'. */
+    type: positionTypeEnum('type').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
