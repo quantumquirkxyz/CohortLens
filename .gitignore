@@ -64,6 +64,9 @@ packages/indexers/**/build/
 # Subgraph tooling (install locally)
 packages/indexers/**/node_modules/
 
+# Turborepo
+.turbo/
+
 # Misc
 *.swp
 *.swo

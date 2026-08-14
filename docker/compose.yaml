@@ -1,0 +1,23 @@
+# CohortLens development environment.
+# Usage: docker compose -f docker/compose.yaml up -d postgres
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: cohortlens-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cohortlens
+      POSTGRES_PASSWORD: cohortlens
+      POSTGRES_DB: cohortlens
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cohortlens -d cohortlens"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:

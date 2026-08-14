@@ -1,92 +1,77 @@
 # CohortLens
 
-[![CI](https://github.com/Quantumquirkz/CohortLens/actions/workflows/ci.yml/badge.svg)](https://github.com/Quantumquirkz/CohortLens/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Tools and services for cohort analysis and on-chain data: smart contracts (Foundry), ML API ([`packages/backend-ai`](packages/backend-ai/README.md)), Next.js web interface ([`packages/frontend`](packages/frontend/README.md)), and The Graph indexers ([`packages/indexers`](packages/indexers/README.md)).
-
-**Documentation site (Docusaurus):** build and run locally with `cd docs && npm install && npm start`, or see [docs/docs/intro.md](docs/docs/intro.md) in the repository.
+A DeFi platform powered by Graph Engineering: it maps, predicts, and recommends
+on complex capital flows between multiple protocols and blockchains. See
+[`CONTEXT.md`](CONTEXT.md) for the domain glossary (Capital Flow Graph, Lenses,
+Cohorts, etc.).
 
 ## Monorepo architecture
 
-```text
-packages/
-├── contracts/   # Solidity (Foundry)
-├── backend-ai/  # FastAPI + ML
-├── frontend/    # Next.js + Wagmi
-└── indexers/    # Subgraphs (The Graph)
-```
+Turborepo + pnpm workspaces, TypeScript everywhere.
 
-- **Contracts**: on-chain logic and deployment scripts.
-- **Backend AI**: HTTP API, future integration with Postgres and Redis from `docker-compose`.
-- **Frontend**: web app and wallet connection.
-- **Indexers**: subgraphs per protocol (e.g. Aave v3 on Polygon).
+```text
+apps/
+├── api/       # Hono backend (REST API, port 8000)
+└── web/       # React 19 + Vite + Tailwind 4 dashboard (port 3000)
+packages/
+├── shared/    # Shared types and utilities (@cohortlens/shared)
+└── database/  # PostgreSQL access (@cohortlens/database)
+```
 
 ## Requirements
 
-- **Node.js** 18+ (for frontend and `graph-cli` in indexers)
-- **Python** 3.11+ (backend without Docker)
-- **Docker** and Docker Compose (integrated environment)
-- **Foundry** (`forge`, `cast`) for [`packages/contracts`](packages/contracts/README.md)
+- **Node.js** 20+
+- **pnpm** 11 (`corepack enable && corepack prepare pnpm@11.21.0 --activate`)
+- **Docker** + Docker Compose (for PostgreSQL)
 
-## ML Lab stack (PostgREST, Hugging Face, Gradio)
+## Quick start
 
-Optional services use the Compose profile `labs` (PostgREST on host port **3003**, Gradio on **7860**). Example:
+1. Install dependencies:
 
-```bash
-docker compose --profile labs up --build
-```
+   ```bash
+   pnpm install
+   ```
 
-The backend runs Alembic migrations on startup against PostgreSQL. See [docs/docs/integration-labs.md](docs/docs/integration-labs.md) (Docusaurus: *PostgREST, Hugging Face, and Gradio*).
+2. Start PostgreSQL in Docker:
 
-## Quick start with Docker
+   ```bash
+   docker compose -f docker/compose.yaml up -d postgres
+   ```
 
-1. Copy example variables and adjust as needed:
+3. Copy environment variables:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Start services (app Postgres, Graph Node Postgres, Redis, IPFS, Graph Node, backend, frontend):
+4. Run the dev environment (API + web, with hot reload):
 
    ```bash
-   docker compose up --build
+   pnpm dev
    ```
 
-   Full startup (especially **Graph Node** and **IPFS**) can take time and use significant resources. For a lighter cycle (API and databases only):
+   - API: [http://localhost:8000/health](http://localhost:8000/health) → `{"status":"ok"}`
+   - Web: [http://localhost:3000](http://localhost:3000)
 
-   ```bash
-   docker compose up --build postgres postgres-graph redis backend-ai frontend ipfs
-   ```
+## Scripts
 
-   Or manually exclude `graph-node` from the profile if you add profiles later.
-
-3. Check the backend: [http://localhost:8000/health](http://localhost:8000/health) should return `{"status":"ok"}`.
-
-4. Frontend: [http://localhost:3000](http://localhost:3000).
-
-5. **Graph Node** (if running): HTTP on host mapped to port **8020** (equivalent to container port 8000).
+| Command             | Description                              |
+| ------------------- | ---------------------------------------- |
+| `pnpm dev`          | Run API and web with hot reload (turbo)  |
+| `pnpm build`        | Build all packages                       |
+| `pnpm test`         | Run tests (Vitest)                       |
+| `pnpm lint`         | Lint with ESLint                         |
+| `pnpm type-check`   | Type-check all packages                  |
 
 ## Default ports
 
-| Service        | Host port |
-| -------------- | ----------- |
-| Frontend       | 3000        |
-| Backend AI     | 8000        |
-| Postgres (app) | **5434** by default on the host (avoids clashes with local Postgres on 5432); set `POSTGRES_HOST_PORT` to change |
-| Postgres Graph | 5433        |
-| Redis          | **6380** by default on the host (avoids clashes with local Redis on 6379); set `REDIS_HOST_PORT` to change |
-| Graph Node HTTP| 8020        |
-| IPFS API       | 5001        |
-| PostgREST (`labs` profile) | 3003 |
-| Gradio Lab (`labs` profile) | 7860 |
-
-## Package documentation
-
-- [Contracts (Foundry)](packages/contracts/README.md)
-- [Backend AI](packages/backend-ai/README.md)
-- [Frontend](packages/frontend/README.md)
-- [Indexers](packages/indexers/README.md)
+| Service      | Host port                        |
+| ------------ | -------------------------------- |
+| API          | 8000 (`PORT`)                    |
+| Web (Vite)   | 3000                             |
+| PostgreSQL   | 5432 (`POSTGRES_PORT`)           |
 
 ## License and community
 
