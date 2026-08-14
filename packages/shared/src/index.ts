@@ -92,6 +92,11 @@ export interface LensDefinition {
   active: boolean;
 }
 
+/** Whether a value is a plain positive decimal (numeric-as-string). */
+export function isNumericString(value: unknown): value is string {
+  return typeof value === 'string' && /^\d+(\.\d+)?$/.test(value);
+}
+
 /** The kinds of Signals a Lens can produce (CONTEXT.md — Signal). */
 export const SIGNAL_KINDS = ['risk', 'liquidity', 'recommendation'] as const;
 
@@ -99,7 +104,9 @@ export type SignalKind = (typeof SIGNAL_KINDS)[number];
 
 /** A single typed observation produced by a Lens. */
 export interface LensFinding {
-  walletId: string;
+  /** The node the finding refers to (a Wallet, Pool, Protocol, ...). */
+  nodeId: string;
+  nodeType: NodeType;
   /** Normalized 0..1 heuristic score. */
   score: number;
   reasons: string[];

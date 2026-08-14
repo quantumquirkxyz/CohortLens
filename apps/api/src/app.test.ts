@@ -300,11 +300,16 @@ describe('CohortLens API — lenses', () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      result: { lensId: string; signal: string; findings: Array<{ walletId: string }> };
+      result: {
+        lensId: string;
+        signal: string;
+        findings: Array<{ nodeId: string; nodeType: string }>;
+      };
     };
     expect(body.result.lensId).toBe('high-risk-wallets');
     expect(body.result.signal).toBe('risk');
-    expect(body.result.findings[0]!.walletId).toBe('wallet-9');
+    expect(body.result.findings[0]!.nodeId).toBe('wallet-9');
+    expect(body.result.findings[0]!.nodeType).toBe('wallet');
   });
 
   it('returns the latest execution results for a lens', async () => {

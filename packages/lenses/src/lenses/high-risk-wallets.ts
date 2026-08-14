@@ -89,7 +89,7 @@ export const highRiskWallets: RegisteredLens = {
         }
         if (a.hasBorrowOrWithdraw) reasons.push('borrow/withdraw exposure');
 
-        return { walletId: a.walletId, score: round2(score), reasons };
+        return { nodeId: a.walletId, nodeType: 'wallet' as const, score: round2(score), reasons };
       })
       .filter((f) => f.score >= minScore)
       .sort((a, b) => b.score - a.score)

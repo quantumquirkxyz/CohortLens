@@ -54,7 +54,8 @@ describe('high-risk-wallets lens', () => {
     const result = await run(flows);
     expect(result.signal).toBe('risk');
     expect(result.findings.length).toBeGreaterThanOrEqual(1);
-    expect(result.findings[0]!.walletId).toBe('wallet-a');
+    expect(result.findings[0]!.nodeId).toBe('wallet-a');
+    expect(result.findings[0]!.nodeType).toBe('wallet');
     expect(result.findings[0]!.score).toBeGreaterThan(0);
     expect(result.findings[0]!.reasons.length).toBeGreaterThan(0);
   });
@@ -65,7 +66,7 @@ describe('high-risk-wallets lens', () => {
       flow('f2', wallet('wallet-b'), pool, 'Borrow', '100'),
     ];
     const result = await run(flows, { minScore: 0 });
-    const byWallet = new Map(result.findings.map((f) => [f.walletId, f.score]));
+    const byWallet = new Map(result.findings.map((f) => [f.nodeId, f.score]));
     // wallet-b has borrow exposure (0.2 bonus) over wallet-a with equal volume.
     expect(byWallet.get('wallet-b')!).toBeGreaterThan(byWallet.get('wallet-a')!);
   });
@@ -93,6 +94,8 @@ describe('high-risk-wallets lens', () => {
       flow('f2', pool, { id: 'pool-y', type: 'pool' }, 'Swap', '100'),
     ];
     const result = await run(flows);
-    expect(result.findings.every((f) => f.walletId === 'w1')).toBe(true);
+    expect(result.findings.every((f) => f.nodeId === 'w1' && f.nodeType === 'wallet')).toBe(
+      true,
+    );
   });
 });

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { LensDefinition, LensType } from '@cohortlens/shared';
-import { LENS_TYPES } from '@cohortlens/shared';
+import { LENS_TYPES, isNumericString } from '@cohortlens/shared';
 import {
   ExecutionStore,
   LensExecutionError,
@@ -88,7 +88,7 @@ function parseLensDefinition(body: unknown): LensDefinition | null {
     return null;
   }
   if (typeof description !== 'string') return null;
-  if (price !== undefined && typeof price !== 'string') return null;
+  if (price !== undefined && !isNumericString(price)) return null;
 
   return {
     id,
