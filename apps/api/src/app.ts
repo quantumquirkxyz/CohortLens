@@ -1,10 +1,12 @@
 import { Hono } from 'hono';
+import { APP_NAME } from '@cohortlens/shared';
 
 export const app = new Hono();
 
 app.get('/', (c) =>
   c.json({
-    name: 'CohortLens API',
+    name: APP_NAME,
+    service: 'api',
     version: '0.1.0',
     health: '/health',
   }),

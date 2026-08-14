@@ -3,46 +3,20 @@ node_modules/
 .pnp
 .pnp.js
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-.venv/
-venv/
-ENV/
-env/
-*.egg-info/
-.eggs/
+# Build output
 dist/
 build/
-*.egg
 
 # Environment
 .env
 .env.local
 .env.*.local
 
-# Next.js
-.next/
-out/
-
-# Foundry (no usar `lib/` global: ignoraría packages/frontend/lib)
-out/
-cache/
-broadcast/
-packages/contracts/lib/
-
 # Testing / coverage
 coverage/
-packages/contracts/lcov.info
-packages/backend-ai/pytest_cohortlens.db
-.coverage
-htmlcov/
-.pytest_cache/
-.mypy_cache/
-*.cover
+
+# Turborepo
+.turbo/
 
 # Logs
 *.log
@@ -56,16 +30,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
-# The Graph (generated after `graph codegen`)
-packages/indexers/**/generated/
-packages/indexers/**/build/
-
-# Subgraph tooling (install locally)
-packages/indexers/**/node_modules/
-
-# Turborepo
-.turbo/
 
 # Misc
 *.swp

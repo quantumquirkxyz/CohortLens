@@ -8,10 +8,11 @@ describe('CohortLens API', () => {
     expect(await res.json()).toEqual({ status: 'ok' });
   });
 
-  it('responds on /', async () => {
+  it('responds on / with the shared app name', async () => {
     const res = await app.request('/');
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { name: string };
-    expect(body.name).toBe('CohortLens API');
+    const body = (await res.json()) as { name: string; service: string };
+    expect(body.name).toBe('CohortLens');
+    expect(body.service).toBe('api');
   });
 });
