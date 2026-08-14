@@ -8,6 +8,22 @@
 export * from './schema';
 export { createDb, type Db } from './client';
 export {
+  ensureAsset,
+  ensureChain,
+  ensurePool,
+  ensureProtocol,
+  ensureWallet,
+  findAssetId,
+  findWalletId,
+  getSyncCursor,
+  setSyncCursor,
+  type EnsureAssetInput,
+  type EnsureChainInput,
+  type EnsurePoolInput,
+  type EnsureProtocolInput,
+  type EnsureWalletInput,
+} from './nodes';
+export {
   createFlow,
   getFlow,
   getNeighborhood,

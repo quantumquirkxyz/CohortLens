@@ -1,0 +1,53 @@
+type Chain @entity {
+  id: ID!
+  name: String!
+}
+
+type Protocol @entity {
+  id: ID!
+  name: String!
+  chain: Chain!
+}
+
+type Asset @entity {
+  id: ID!
+  symbol: String!
+  name: String!
+  chain: Chain!
+  decimals: Int!
+}
+
+type Wallet @entity {
+  id: ID!
+  address: Bytes!
+}
+
+type Pool @entity {
+  id: ID!
+  address: Bytes
+  protocol: Protocol!
+  asset: Asset!
+}
+
+type CapitalFlow @entity {
+  id: ID!
+  type: FlowType!
+  fromWallet: Wallet!
+  toWallet: Wallet!
+  pool: Pool
+  amount: BigDecimal!
+  asset: Asset!
+  chain: Chain!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+enum FlowType {
+  DEPOSIT
+  BORROW
+  REPAY
+  WITHDRAW
+  SWAP
+  TRANSFER
+}

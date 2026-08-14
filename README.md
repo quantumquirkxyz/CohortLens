@@ -19,7 +19,8 @@ packages/
 ├── shared/     # Shared types and utilities (@cohortlens/shared)
 ├── database/   # PostgreSQL access (@cohortlens/database)
 ├── lenses/     # Lens registry, execution engine and mock lenses (@cohortlens/lenses)
-└── contracts/  # Solidity smart contracts (Foundry, @cohortlens/contracts)
+├── contracts/  # Solidity smart contracts (Foundry, @cohortlens/contracts)
+└── indexer/    # On-chain indexer (Fase 6): The Graph subgraph + Hono sync service
 ```
 
 ## Smart contracts (Fase 4)
@@ -140,12 +141,27 @@ Stack: `@xyflow/react`, `@tanstack/react-query`, `zustand`, `recharts`,
 `react-router-dom`, and `wagmi` (wallet connect — requires a browser wallet;
 contracts deploy is still pending Fase 4 credentials).
 
+## Indexer (packages/indexer, Fase 6)
+
+The Graph subgraph in `packages/indexer/subgraph` indexes `CFGEvents` from the
+LensOracle contract into `CapitalFlow` entities (assemblyscript mapping, run
+`pnpm --filter @cohortlens/indexer graph:codegen && graph:build`). The Hono
+sync service polls it and writes into PostgreSQL:
+
+- `POST /sync` — poll one chain (`{ "chain": "ethereum" }`), advance the cursor
+  stored in `sync_state`, and upsert the CFG nodes/flows it references.
+- `GET /health`, `GET /status` — liveness and per-chain cursor positions.
+
+Configure endpoints per chain with `SUBGRAPH_URL_ETHEREUM=...` env vars; the
+service runs with `pnpm --filter @cohortlens/indexer dev` on port 8001.
+
 ## Default ports
 
 | Service      | Host port                        |
 | ------------ | -------------------------------- |
 | API          | 8000 (`PORT`)                    |
 | Web (Vite)   | 3000                             |
+| Indexer      | 8001                             |
 | PostgreSQL   | 5432 (`POSTGRES_PORT`)           |
 
 ## License and community

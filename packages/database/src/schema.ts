@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   index,
   integer,
   jsonb,
@@ -137,6 +138,15 @@ export const capitalFlows = pgTable(
     index('capital_flows_path_idx').on(t.fromNodeId, t.toNodeId, t.timestamp),
   ],
 );
+
+// === INDEXER STATE ===
+// Per-chain ingestion cursor for the Fase 6 sync service (subgraph → CFG).
+
+export const syncState = pgTable('sync_state', {
+  chainId: text('chain_id').primaryKey(),
+  lastBlock: bigint('last_block', { mode: 'number' }).notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 // === ANALYTICS TABLES ===
 // Lightweight stand-ins for the materialized views the topological analysis
