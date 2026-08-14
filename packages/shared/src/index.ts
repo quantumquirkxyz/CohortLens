@@ -97,6 +97,11 @@ export function isNumericString(value: unknown): value is string {
   return typeof value === 'string' && /^\d+(\.\d+)?$/.test(value);
 }
 
+/** Whether a value is a non-null, non-array object. */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /** The kinds of Signals a Lens can produce (CONTEXT.md — Signal). */
 export const SIGNAL_KINDS = ['risk', 'liquidity', 'recommendation'] as const;
 
@@ -120,3 +125,49 @@ export interface LensResult {
   findings: LensFinding[];
   summary: string;
 }
+
+/** A set of Wallets sharing behavioral patterns (CONTEXT.md — Cohort). */
+export interface Cohort {
+  id: string;
+  label: string;
+  wallets: string[];
+}
+
+/**
+ * A proposed sequence of capital-flow edges between two nodes, found as the
+ * cheapest/lowest-cost path (CONTEXT.md — Route). Recommended, never executed.
+ */
+export interface Route {
+  source: string;
+  target: string;
+  /** Node ids along the path, source first. */
+  nodes: string[];
+  /** The capital-flow edges traversed, in order. */
+  steps: CapitalFlow[];
+  totalCost: number;
+}
+
+/** Correlation between two assets over the same time buckets. */
+export interface CoMovementPair {
+  assetA: string;
+  assetB: string;
+  /** Pearson correlation in [-1, 1]. */
+  correlation: number;
+  /** Number of shared time buckets used. */
+  samples: number;
+}
+
+/** Asset co-movement analysis over time-bucketed flow volume (CONTEXT.md — Signal). */
+export interface CoMovementResult {
+  assets: string[];
+  bucket: string;
+  pairs: CoMovementPair[];
+}
+
+export {
+  betweennessCentrality,
+  degreeCentrality,
+  detectCoMovement,
+  detectCommunities,
+  findCheapestPath,
+} from './algorithms';

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { LensDefinition, LensType } from '@cohortlens/shared';
-import { LENS_TYPES, isNumericString } from '@cohortlens/shared';
+import { LENS_TYPES, isNumericString, isRecord } from '@cohortlens/shared';
 import {
   ExecutionStore,
   LensExecutionError,
@@ -72,10 +72,6 @@ export function createLensRoutes(deps: LensRoutesDeps): Hono {
   });
 
   return app;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function parseLensDefinition(body: unknown): LensDefinition | null {

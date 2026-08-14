@@ -8,6 +8,7 @@ import {
   isFlowType,
   isNodeType,
   isNumericString,
+  isRecord,
 } from './index';
 
 describe('@cohortlens/shared', () => {
@@ -68,5 +69,13 @@ describe('@cohortlens/shared', () => {
     expect(isNumericString('-1')).toBe(false);
     expect(isNumericString('1e3')).toBe(false);
     expect(isNumericString(42)).toBe(false);
+  });
+
+  it('isRecord rejects null, arrays, and primitives', () => {
+    expect(isRecord({ a: 1 })).toBe(true);
+    expect(isRecord(null)).toBe(false);
+    expect(isRecord([1, 2])).toBe(false);
+    expect(isRecord('x')).toBe(false);
+    expect(isRecord(undefined)).toBe(false);
   });
 });

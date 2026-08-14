@@ -65,6 +65,42 @@ packages/
 | `pnpm lint`         | Lint with ESLint                         |
 | `pnpm type-check`   | Type-check all packages                  |
 
+## API endpoints (apps/api)
+
+Base URL: `http://localhost:8000`
+
+### Graph (Fase 1)
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/graph/nodes` | List all nodes of the Capital Flow Graph |
+| GET | `/api/graph/flows?page=&limit=` | List capital flows (paged) |
+| GET | `/api/graph/flow/:id` | Get a single capital flow |
+| POST | `/api/graph/flows` | Ingest a capital flow (indexer webhook) |
+| GET | `/api/graph/stats` | Graph statistics (node/flow counts) |
+| GET | `/api/graph/neighborhood/:id` | Flows touching a node |
+
+### Lenses (Fase 2)
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/lenses` | List registered Lenses |
+| GET | `/api/lenses/:id` | Lens metadata |
+| POST | `/api/lenses` | Register a Lens (metadata-only) |
+| POST | `/api/lenses/:id/publish` | Activate a Lens |
+| POST | `/api/lenses/:id/execute` | Execute a Lens (`{ params }`) |
+| GET | `/api/lenses/:id/results` | Latest execution result |
+
+### Analysis (Fase 3)
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/analysis/communities` | Detect wallet Cohorts (community detection) |
+| GET | `/api/analysis/path?source=&target=` | Cheapest path between two nodes |
+| GET | `/api/analysis/centrality` | Degree + betweenness centrality |
+| GET | `/api/analysis/co-movement?assets=USDC,DAI` | Asset correlation over daily volume |
+| POST | `/api/analysis/custom` | Dispatch a custom analysis (`{ algorithm, params }`) |
+
 ## Default ports
 
 | Service      | Host port                        |

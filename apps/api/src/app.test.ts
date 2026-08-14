@@ -331,3 +331,100 @@ describe('CohortLens API — lenses', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('CohortLens API — analysis', () => {
+  const node = (id: string, type: 'wallet' | 'pool') => ({ id, type });
+
+  function flow(id: string, from: string, to: string, amount: string, day?: string) {
+    return {
+      id,
+      from: node(from, 'pool'),
+      to: node(to, 'pool'),
+      type: 'Transfer',
+      amount,
+      asset: 'USDC',
+      chain: 'Ethereum',
+      timestamp: new Date(`${day ?? '2026-08-01'}T12:00:00Z`),
+      metadata: null,
+    };
+  }
+
+  const analysisFlows = [
+    flow('f1', 'a', 'x', '100'),
+    flow('f2', 'x', 'b', '200'),
+    flow('f3', 'a', 'z', '1'),
+    flow('f4', 'z', 'b', '1'),
+  ];
+
+  beforeEach(() => {
+    mockListFlows.mockResolvedValue(analysisFlows);
+  });
+
+  it('detects communities over the loaded graph', async () => {
+    const res = await app.request('/api/analysis/communities');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { cohorts: Array<{ wallets: string[] }> };
+    expect(Array.isArray(body.cohorts)).toBe(true);
+  });
+
+  it('finds the cheapest path between two nodes', async () => {
+    const res = await app.request('/api/analysis/path?source=a&target=b');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { route: { nodes: string[]; steps: unknown[] } };
+    expect(body.route.nodes).toEqual(['a', 'x', 'b']);
+    expect(body.route.steps).toHaveLength(2);
+  });
+
+  it('rejects a path request without source or target', async () => {
+    const res = await app.request('/api/analysis/path?source=a');
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when no path exists', async () => {
+    const res = await app.request('/api/analysis/path?source=a&target=missing');
+    expect(res.status).toBe(404);
+  });
+
+  it('computes centrality metrics', async () => {
+    const res = await app.request('/api/analysis/centrality');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      degree: Record<string, number>;
+      betweenness: Record<string, number>;
+    };
+    expect(Object.keys(body.degree).length).toBeGreaterThan(0);
+    expect(Object.keys(body.betweenness).length).toBeGreaterThan(0);
+  });
+
+  it('detects co-movement for the requested assets', async () => {
+    mockListFlows.mockResolvedValue([
+      flow('f1', 'a', 'b', '100', '2026-08-01'),
+      flow('f2', 'a', 'b', '200', '2026-08-02'),
+      flow('f3', 'a', 'b', '300', '2026-08-03'),
+    ]);
+    const res = await app.request('/api/analysis/co-movement?assets=USDC,DAI');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { result: { pairs: unknown[] } };
+    expect(Array.isArray(body.result.pairs)).toBe(true);
+  });
+
+  it('runs a custom analysis via POST dispatch', async () => {
+    const res = await app.request('/api/analysis/custom', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ algorithm: 'path', params: { source: 'a', target: 'b' } }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { result: { route: { nodes: string[] } } };
+    expect(body.result.route.nodes).toEqual(['a', 'x', 'b']);
+  });
+
+  it('rejects an unknown custom algorithm', async () => {
+    const res = await app.request('/api/analysis/custom', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ algorithm: 'quantum', params: {} }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
