@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (updated 2026-08-14 to match the implemented dev environment: turbo 2.x `tasks`, root-level `tsconfig.base.json`)
 
 ## Context
 
@@ -33,9 +33,9 @@ cohortlens/
 │   ├── contracts/              # Foundry project (Solidity)
 │   ├── indexer/                # The Graph subgraph
 │   └── ui/                     # Shared React components
-├── turbo.json                  # Turborepo pipeline config
+├── turbo.json                  # Turborepo task pipeline
 ├── pnpm-workspace.yaml         # Workspace definition
-├── tsconfig.json               # Root TypeScript config
+├── tsconfig.base.json          # Root TypeScript base config
 └── package.json                # Root package.json
 ```
 
@@ -54,13 +54,15 @@ Layer 0 — Foundation (Types, contracts)
 
 ### Build Pipeline
 
+Turborepo 2.x uses the `tasks` key (the v1 `pipeline` key is deprecated).
+
 ```json
 {
-  "pipeline": {
-    "build": { "dependsOn": ["^build"] },
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
     "dev": { "cache": false, "persistent": true },
     "lint": {},
-    "test": { "dependsOn": ["build"] },
+    "test": { "dependsOn": ["^build"] },
     "type-check": { "dependsOn": ["^build"] }
   }
 }
@@ -68,9 +70,9 @@ Layer 0 — Foundation (Types, contracts)
 
 ### TypeScript Configuration
 
-- Shared base config in `packages/typescript-config/base.json`
+- Shared base config at the repo root (`tsconfig.base.json`)
 - Each package extends from base
-- Path aliases for internal packages: `@cohortlens/shared`, `@cohortlens/database`
+- Internal packages resolved via pnpm `workspace:*` protocol with bundler module resolution (`@cohortlens/shared`, `@cohortlens/database`)
 
 ### Package Manager
 
