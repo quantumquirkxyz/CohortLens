@@ -15,5 +15,10 @@ export default defineConfig({
         process.env.TEST_DATABASE_URL ??
         'postgres://cohortlens:cohortlens@localhost:5432/cohortlens_test',
     },
+    coverage: {
+      // bootstrap plumbing for tests/CI is not domain logic — keep it out of
+      // the coverage gate so the 80% threshold measures the actual package.
+      exclude: ['src/test-utils.ts', 'src/bootstrap-cli.ts'],
+    },
   },
 });

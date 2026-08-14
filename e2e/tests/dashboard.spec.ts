@@ -11,7 +11,7 @@ test.describe('dashboard smoke (Fase 5/7)', () => {
     // The flows table renders a seeded flow (any flow type label).
     await expect(page.getByRole('table')).toBeVisible();
     await expect(
-      page.getByRole('table').getByText(/Deposit|Borrow|Withdraw|Transfer|Swap/),
+      page.getByRole('table').getByText(/Deposit|Borrow|Withdraw|Transfer|Swap/).first(),
     ).toBeVisible();
   });
 
