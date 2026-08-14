@@ -120,6 +120,26 @@ Base URL: `http://localhost:8000`
 | GET | `/api/analysis/co-movement?assets=USDC,DAI` | Asset correlation over daily volume |
 | POST | `/api/analysis/custom` | Dispatch a custom analysis (`{ algorithm, params }`) |
 
+## Dashboard (apps/web)
+
+React 19 + Vite + Tailwind dashboard (Fase 5, ADR 007) served at :3000. The
+Vite dev server proxies `/api` to the API on :8000, so the pages consume the
+same REST endpoints as curl:
+
+| Route        | Page                                                            |
+| ------------ | --------------------------------------------------------------- |
+| `/`          | Overview (graph stats + recent flows)                           |
+| `/graph`     | Capital Flow Graph explorer (React Flow, neighborhood panel)    |
+| `/lenses`    | Lens marketplace (register, publish, execute, results)          |
+| `/cohorts`   | Wallet cohorts + asset co-movement chart (Recharts)             |
+| `/routes`    | Cheapest-path optimizer                                         |
+| `/protocols` | Protocols and chains table                                      |
+| `/settings`  | Placeholder                                                     |
+
+Stack: `@xyflow/react`, `@tanstack/react-query`, `zustand`, `recharts`,
+`react-router-dom`, and `wagmi` (wallet connect — requires a browser wallet;
+contracts deploy is still pending Fase 4 credentials).
+
 ## Default ports
 
 | Service      | Host port                        |
