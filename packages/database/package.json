@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/migrate.ts",
     "db:seed": "tsx src/seed-cli.ts",
+    "db:bootstrap": "tsx src/bootstrap-cli.ts",
     "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^22",
     "@types/pg": "^8.21.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",

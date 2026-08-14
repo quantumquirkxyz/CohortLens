@@ -155,6 +155,21 @@ sync service polls it and writes into PostgreSQL:
 Configure endpoints per chain with `SUBGRAPH_URL_ETHEREUM=...` env vars; the
 service runs with `pnpm --filter @cohortlens/indexer dev` on port 8001.
 
+## Testing & CI/CD (Fase 7)
+
+- **Unit/integration**: Vitest across packages (`pnpm test`); the `database`
+  suite runs against a dedicated `cohortlens_test` PostgreSQL database that the
+  global setup creates, migrates and seeds per run.
+- **Coverage**: the core packages (`shared`, `database`, `lenses`, `api`,
+  `indexer`) enforce a **>80%** statements/lines threshold via vitest v8
+  (`pnpm --filter @cohortlens/<pkg> exec vitest run --coverage`).
+- **E2E**: Playwright smoke tests in `e2e/` (`pnpm e2e`) boot the API (:8000)
+  and web (:3000), migrate/seed the DB, and verify the dashboard renders the
+  real graph (overview stats, React Flow canvas, lenses page).
+- **CI**: `.github/workflows/ci.yml` runs lint, type-check, test, build,
+  coverage and E2E in parallel on every push/PR — PostgreSQL via a service
+  container and Foundry via the official toolchain action.
+
 ## Default ports
 
 | Service      | Host port                        |

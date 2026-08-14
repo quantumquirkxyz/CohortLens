@@ -11,10 +11,14 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "eslint .",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.39.5",
     "turbo": "^2.10.10",
     "typescript-eslint": "^8.67.0"
