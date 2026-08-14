@@ -1,8 +1,20 @@
 /**
  * @cohortlens/database — PostgreSQL access for CohortLens.
  *
- * Scaffolded in Fase 0 (issue #11). The ORM choice (Prisma per ADR-004 vs
- * Drizzle per docs/IMPLEMENTATION-PLAN.md) and the Capital Flow Graph schema
- * are decided in Fase 1 (issue #8).
+ * Drizzle ORM schema for the Capital Flow Graph (see ADR 004, updated to
+ * Drizzle when implementing issue #8), a lazy client factory, and graph
+ * repository functions used by the API.
  */
-export {};
+export * from './schema';
+export { createDb, type Db } from './client';
+export {
+  createFlow,
+  getFlow,
+  getNeighborhood,
+  getStats,
+  listFlows,
+  listNodes,
+  type CreateCapitalFlowInput,
+  type GraphStats,
+  type NodeNeighborhood,
+} from './graph';

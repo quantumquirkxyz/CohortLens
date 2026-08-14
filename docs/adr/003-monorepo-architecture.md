@@ -29,7 +29,7 @@ cohortlens/
 │   └── docs/                   # Documentation site
 ├── packages/
 │   ├── shared/                 # Shared TypeScript types and utilities
-│   ├── database/               # Prisma schema and client
+│   ├── database/               # Drizzle schema and migrations
 │   ├── contracts/              # Foundry project (Solidity)
 │   ├── indexer/                # The Graph subgraph
 │   └── ui/                     # Shared React components
