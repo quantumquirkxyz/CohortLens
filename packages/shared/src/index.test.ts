@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   APP_NAME,
   FLOW_TYPES,
+  LENS_TYPES,
   NODE_TYPES,
+  SIGNAL_KINDS,
   isFlowType,
   isNodeType,
+  isNumericString,
 } from './index';
 
 describe('@cohortlens/shared', () => {
@@ -47,5 +50,23 @@ describe('@cohortlens/shared', () => {
     expect(isFlowType('Swap')).toBe(true);
     expect(isFlowType('Stake')).toBe(false);
     expect(isFlowType(undefined)).toBe(false);
+  });
+
+  it('defines the three lens categories', () => {
+    expect(LENS_TYPES).toEqual(['ml_model', 'graph_query', 'risk_signal']);
+  });
+
+  it('defines the signal kinds a Lens can produce', () => {
+    expect(SIGNAL_KINDS).toEqual(['risk', 'liquidity', 'recommendation']);
+  });
+
+  it('isNumericString accepts plain positive decimals only', () => {
+    expect(isNumericString('42')).toBe(true);
+    expect(isNumericString('42.5')).toBe(true);
+    expect(isNumericString('0.000001')).toBe(true);
+    expect(isNumericString('abc')).toBe(false);
+    expect(isNumericString('-1')).toBe(false);
+    expect(isNumericString('1e3')).toBe(false);
+    expect(isNumericString(42)).toBe(false);
   });
 });

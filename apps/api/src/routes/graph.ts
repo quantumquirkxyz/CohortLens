@@ -8,7 +8,7 @@ import {
   listNodes,
   type CreateCapitalFlowInput,
 } from '@cohortlens/database';
-import { isFlowType, isNodeType } from '@cohortlens/shared';
+import { isFlowType, isNodeType, isNumericString } from '@cohortlens/shared';
 import { getDb } from '../db';
 
 export const graph = new Hono();
@@ -82,7 +82,7 @@ function parseFlowInput(body: Record<string, unknown>): CreateCapitalFlowInput |
   if (typeof toNodeId !== 'string' || toNodeId.length === 0) return null;
   if (!isNodeType(fromNodeType) || !isNodeType(toNodeType)) return null;
   if (!isFlowType(type)) return null;
-  if (typeof amount !== 'string' || !/^\d+(\.\d+)?$/.test(amount)) return null;
+  if (!isNumericString(amount)) return null;
   if (typeof assetId !== 'string' || assetId.length === 0) return null;
   if (typeof chainId !== 'string' || chainId.length === 0) return null;
 
