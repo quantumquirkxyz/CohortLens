@@ -51,7 +51,7 @@ Follow the issue workflow in `AGENTS.md`; this skill only publishes the already-
       - assignee: the current GitHub user
       - reviewers: the other human collaborator, and any additional reviewers explicitly resolved by the bundle
       - labels: the linked issue's non-triage labels
-      - milestone: the linked issue milestone, or the repo default `MVP Alpha`
+      - milestone: the linked issue milestone, if one is set
     - Use `gh pr create --title "<title>" --body-file "<body-file>" --assignee "@me" --milestone "<milestone>"` without `--draft`, then add repeated `--label` and `--reviewer` flags from the metadata bundle.
    - Use a title that matches the subissue and the actual diff.
 6. Hand off to the next workflow.

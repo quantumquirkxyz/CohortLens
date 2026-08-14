@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_MILESTONE = "MVP Alpha"
+DEFAULT_MILESTONE = None
 TRIAGE_LABELS = {
     "needs-triage",
     "needs-info",
