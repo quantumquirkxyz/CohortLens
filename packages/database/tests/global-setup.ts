@@ -1,6 +1,7 @@
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import { resolve } from 'node:path';
+import { sql } from 'drizzle-orm';
 import { createDb } from '../src/client';
 import { seedDatabase } from '../src/seed';
 
@@ -23,8 +24,13 @@ export default async function globalSetup() {
   }
   await admin.end();
 
-  // Fresh schema + seed for the tests.
+  // Drop the schemas so every run starts from the pristine seeded state
+  // (rows created by previous runs or tests are gone). The drizzle migrator
+  // keeps its bookkeeping table in its own schema, so both must go.
   const db = createDb(TEST_URL);
+  await db.execute(sql`DROP SCHEMA IF EXISTS public CASCADE`);
+  await db.execute(sql`DROP SCHEMA IF EXISTS drizzle CASCADE`);
+  await db.execute(sql`CREATE SCHEMA public`);
   await migrate(db, { migrationsFolder: resolve(import.meta.dirname, '../drizzle') });
   await seedDatabase(db);
   await db.$client.end();

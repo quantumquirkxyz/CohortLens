@@ -19,6 +19,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.95.0",
     "@graphprotocol/graph-ts": "^0.38.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
