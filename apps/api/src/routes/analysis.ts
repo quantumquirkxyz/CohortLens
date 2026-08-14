@@ -6,6 +6,7 @@ import {
   detectCoMovement,
   detectCommunities,
   findCheapestPath,
+  isRecord,
 } from '@cohortlens/shared';
 
 export interface AnalysisRoutesDeps {
@@ -92,8 +93,4 @@ export function createAnalysisRoutes(deps: AnalysisRoutesDeps): Hono {
   });
 
   return app;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -97,6 +97,11 @@ export function isNumericString(value: unknown): value is string {
   return typeof value === 'string' && /^\d+(\.\d+)?$/.test(value);
 }
 
+/** Whether a value is a non-null, non-array object. */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /** The kinds of Signals a Lens can produce (CONTEXT.md — Signal). */
 export const SIGNAL_KINDS = ['risk', 'liquidity', 'recommendation'] as const;
 

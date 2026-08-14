@@ -33,24 +33,21 @@ export function findCheapestPath(
 
   const dist = new Map<string, number>([[source, 0]]);
   const prev = new Map<string, { node: string; flow: CapitalFlow }>();
-  const settled = new Set<string>();
-  const frontier = new Set<string>([source]);
+  // Binary-heap Dijkstra: O((V + E) log V). Stale entries are skipped on pop.
+  const queue = new MinHeap();
+  queue.push(source, 0);
 
-  while (frontier.size > 0) {
-    const current = [...frontier].sort(
-      (a, b) => (dist.get(a) ?? Infinity) - (dist.get(b) ?? Infinity),
-    )[0]!;
-    frontier.delete(current);
-    settled.add(current);
+  while (queue.size > 0) {
+    const { node: current, priority } = queue.pop()!;
+    if (priority !== (dist.get(current) ?? Infinity)) continue; // stale entry
     if (current === target) break;
 
     for (const edge of edgesOut.get(current) ?? []) {
-      if (settled.has(edge.to)) continue;
       const next = (dist.get(current) ?? Infinity) + cost(current, edge.to);
       if (next < (dist.get(edge.to) ?? Infinity)) {
         dist.set(edge.to, next);
         prev.set(edge.to, { node: current, flow: edge.flow });
-        frontier.add(edge.to);
+        queue.push(edge.to, next);
       }
     }
   }
@@ -76,4 +73,62 @@ export function findCheapestPath(
     steps,
     totalCost: dist.get(target) ?? Infinity,
   };
+}
+
+/** Minimal binary min-heap of (node, priority) pairs. */
+class MinHeap {
+  private items: Array<{ node: string; priority: number }> = [];
+
+  get size(): number {
+    return this.items.length;
+  }
+
+  push(node: string, priority: number): void {
+    this.items.push({ node, priority });
+    this.siftUp(this.items.length - 1);
+  }
+
+  pop(): { node: string; priority: number } | undefined {
+    if (this.items.length === 0) return undefined;
+    const top = this.items[0]!;
+    const last = this.items.pop()!;
+    if (this.items.length > 0) {
+      this.items[0] = last;
+      this.siftDown(0);
+    }
+    return top;
+  }
+
+  private siftUp(index: number): void {
+    while (index > 0) {
+      const parent = (index - 1) >> 1;
+      if (this.items[parent]!.priority <= this.items[index]!.priority) break;
+      [this.items[parent], this.items[index]] = [
+        this.items[index]!,
+        this.items[parent]!,
+      ];
+      index = parent;
+    }
+  }
+
+  private siftDown(index: number): void {
+    const size = this.items.length;
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      let smallest = index;
+      if (left < size && this.items[left]!.priority < this.items[smallest]!.priority) {
+        smallest = left;
+      }
+      if (right < size && this.items[right]!.priority < this.items[smallest]!.priority) {
+        smallest = right;
+      }
+      if (smallest === index) break;
+      [this.items[index], this.items[smallest]] = [
+        this.items[smallest]!,
+        this.items[index]!,
+      ];
+      index = smallest;
+    }
+  }
 }

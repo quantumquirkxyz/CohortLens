@@ -38,14 +38,27 @@ export function detectCommunities(flows: CapitalFlow[]): Cohort[] {
     }
   }
 
+  // Sparse similarity: group wallets by shared interaction key and link each
+  // pair inside a key's set (+1 per key). Equivalent to the pairwise
+  // shared-count formulation, but only visits pairs that actually interact,
+  // instead of the full O(W²) cross product.
+  const walletsByKey = new Map<string, Set<string>>();
+  for (const [wallet, keys] of walletKeys) {
+    for (const key of keys) {
+      const set = walletsByKey.get(key) ?? new Set<string>();
+      set.add(wallet);
+      walletsByKey.set(key, set);
+    }
+  }
+
   const wallets = [...walletKeys.keys()];
   const adjacency = new Map<string, Map<string, number>>();
-  for (let i = 0; i < wallets.length; i++) {
-    for (let j = i + 1; j < wallets.length; j++) {
-      const a = wallets[i]!;
-      const b = wallets[j]!;
-      const shared = countShared(walletKeys.get(a)!, walletKeys.get(b)!);
-      if (shared > 0) link(adjacency, a, b, shared);
+  for (const group of walletsByKey.values()) {
+    const members = [...group];
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        link(adjacency, members[i]!, members[j]!, 1);
+      }
     }
   }
 
@@ -92,12 +105,4 @@ export function detectCommunities(flows: CapitalFlow[]): Cohort[] {
       wallets: [...group].sort(),
     }))
     .sort((a, b) => b.wallets.length - a.wallets.length);
-}
-
-function countShared(a: Set<string>, b: Set<string>): number {
-  let count = 0;
-  for (const key of a) {
-    if (b.has(key)) count += 1;
-  }
-  return count;
 }
