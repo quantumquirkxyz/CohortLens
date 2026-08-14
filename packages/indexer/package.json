@@ -1,0 +1,26 @@
+{
+  "name": "@cohortlens/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "graph:codegen": "cd subgraph && graph codegen",
+    "graph:build": "cd subgraph && graph build"
+  },
+  "dependencies": {
+    "@cohortlens/database": "workspace:*",
+    "@cohortlens/shared": "workspace:*",
+    "@hono/node-server": "^1.19.4",
+    "hono": "^4.13.2"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.95.0",
+    "@graphprotocol/graph-ts": "^0.38.0",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

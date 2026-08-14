@@ -30,6 +30,8 @@ export interface CreateCapitalFlowInput {
   chainId: string;
   timestamp?: Date;
   metadata?: Record<string, unknown> | null;
+  /** Subgraph entity id (txHash-logIndex); dedupes re-syncs when set. */
+  subgraphId?: string | null;
 }
 
 export interface GraphStats {
@@ -153,7 +155,7 @@ export async function getFlow(db: Db, id: string): Promise<CapitalFlow | null> {
 export async function createFlow(
   db: Db,
   input: CreateCapitalFlowInput,
-): Promise<CapitalFlow> {
+): Promise<CapitalFlow | null> {
   const [row] = await db
     .insert(capitalFlows)
     .values({
@@ -167,8 +169,11 @@ export async function createFlow(
       chainId: input.chainId,
       timestamp: input.timestamp ?? new Date(),
       metadata: input.metadata ?? null,
+      subgraphId: input.subgraphId ?? null,
     })
+    .onConflictDoNothing({ target: capitalFlows.subgraphId })
     .returning();
+  if (!row) return null; // subgraphId already ingested (re-sync) — not a duplicate.
   const flow = await getFlow(db, row.id);
   if (!flow) throw new Error('created capital flow could not be re-read');
   return flow;
