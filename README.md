@@ -16,9 +16,28 @@ apps/
 ├── api/       # Hono backend (REST API, port 8000)
 └── web/       # React 19 + Vite + Tailwind 4 dashboard (port 3000)
 packages/
-├── shared/    # Shared types and utilities (@cohortlens/shared)
-└── database/  # PostgreSQL access (@cohortlens/database)
+├── shared/     # Shared types and utilities (@cohortlens/shared)
+├── database/   # PostgreSQL access (@cohortlens/database)
+├── lenses/     # Lens registry, execution engine and mock lenses (@cohortlens/lenses)
+└── contracts/  # Solidity smart contracts (Foundry, @cohortlens/contracts)
 ```
+
+## Smart contracts (Fase 4)
+
+Foundry project in `packages/contracts` (Solidity 0.8.28, OpenZeppelin 5.6):
+`LensToken` (ERC20, 1B cap), `LensRegistry` (pricing bounds 0.1–1000 LENS),
+`LensOracle` (5% protocol fee to treasury) and `LensStaking` (5% base APY +
+lock bonus). See `docs/adr/005-smart-contracts.md` and `docs/adr/008-tokenomics.md`.
+
+```bash
+cd packages/contracts
+forge test                 # 39 tests
+forge coverage             # > 98%
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+Deployment to a testnet (Sepolia) is ready via the same script but requires
+wallet credentials — see issue #16.
 
 ## Requirements
 
