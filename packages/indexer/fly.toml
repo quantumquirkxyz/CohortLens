@@ -6,7 +6,6 @@
 app = "cohortlens-indexer"
 
 [build]
-  context = "../.."
   dockerfile = "../../docker/Dockerfile.indexer"
 
 [env]

@@ -108,17 +108,19 @@ El repo ya incluye `apps/web/vercel.json` (fallback SPA). Pasos:
 ### 3. Backend — Fly.io (API + indexer)
 
 El repo incluye `apps/api/fly.toml` y `packages/indexer/fly.toml`
-(contexto de build = raíz del repo, `docker/Dockerfile.*`).
+(`docker/Dockerfile.*`). flyctl resuelve la ruta `dockerfile` relativa al
+directorio del `fly.toml` y usa el directorio de trabajo como contexto de
+build — ejecuta `fly deploy` desde la raíz del repo con `-c`:
 
 ```bash
 # Instalar flyctl: curl -L https://fly.io/install.sh | sh
-cd apps/api && fly launch --no-deploy   # primera vez (configura nombre/región)
-fly deploy
+fly launch -c apps/api/fly.toml --no-deploy   # primera vez (configura nombre/región)
+fly deploy -c apps/api/fly.toml
 fly secrets set DATABASE_URL="$DATABASE_URL" CORS_ORIGIN="https://<tu-app>.vercel.app" RATE_LIMIT_MAX=300 TRUST_PROXY=1
 fly open                                  # https://cohortlens-api.fly.dev/health
 
-cd ../.. && cd packages/indexer && fly launch --no-deploy
-fly deploy
+fly launch -c packages/indexer/fly.toml --no-deploy
+fly deploy -c packages/indexer/fly.toml
 fly secrets set DATABASE_URL="$DATABASE_URL" SUBGRAPH_URL_ETHEREUM="https://api.thegraph.com/subgraphs/name/cohortlens/ethereum"
 ```
 

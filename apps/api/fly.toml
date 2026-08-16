@@ -4,8 +4,7 @@
 app = "cohortlens-api"
 
 [build]
-  context = "../.."
-  dockerfile = "docker/Dockerfile.api"
+  dockerfile = "../../docker/Dockerfile.api"
 
 [env]
   PORT = "8000"
