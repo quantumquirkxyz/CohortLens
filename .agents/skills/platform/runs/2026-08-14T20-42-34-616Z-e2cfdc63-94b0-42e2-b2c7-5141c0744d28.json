@@ -1,0 +1,16 @@
+{
+  "id": "e2cfdc63-94b0-42e2-b2c7-5141c0744d28",
+  "skill": "skill-audit",
+  "tool": "skills:validate",
+  "startedAt": "2026-08-14T20:42:34.616Z",
+  "finishedAt": "2026-08-14T20:42:34.618Z",
+  "contextPack": "platform-default",
+  "status": "fail",
+  "warnings": [
+    "lockfile missing local entry for make-project"
+  ],
+  "errors": [
+    ".claude/make-project is not a symlink"
+  ],
+  "skills": 35
+}
