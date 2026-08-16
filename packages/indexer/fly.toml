@@ -7,7 +7,7 @@ app = "cohortlens-indexer"
 
 [build]
   context = "../.."
-  dockerfile = "docker/Dockerfile.indexer"
+  dockerfile = "../../docker/Dockerfile.indexer"
 
 [env]
   PORT = "8001"
