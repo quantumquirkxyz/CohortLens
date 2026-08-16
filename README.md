@@ -170,6 +170,24 @@ service runs with `pnpm --filter @cohortlens/indexer dev` on port 8001.
   coverage and E2E in parallel on every push/PR — PostgreSQL via a service
   container and Foundry via the official toolchain action.
 
+## Deployment (Fase 8)
+
+Production artifacts live under `docker/` (multi-stage images for the API, web
+via nginx, indexer, and a one-shot migrate/seed job) plus `apps/web/vercel.json`
+and `apps/api|packages/indexer/fly.toml` for managed hosting. See
+[`docs/deploy.md`](docs/deploy.md) for the full guide.
+
+Quick start (self-hosted stack):
+
+```bash
+SEED=true docker compose -f docker/compose.prod.yaml up -d --build
+open http://localhost:8080
+```
+
+Recommended production setup: **Vercel** (frontend) + **Fly.io** (API &
+indexer containers) + **Neon** (managed PostgreSQL) + optional **Upstash**
+Redis + **Sentry**/uptime monitoring.
+
 ## Default ports
 
 | Service      | Host port                        |

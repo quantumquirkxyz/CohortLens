@@ -675,7 +675,7 @@ jobs:
 ---
 
 ### Fase 8: Deployment
-**Status**: Research | **Priority**: P3-Low | **Package**: devops
+**Status**: Implementado (Aug 2026, ver `docs/deploy.md`) | **Priority**: P3-Low | **Package**: devops
 
 **Entregable**: Producción desplegada y funcionando
 

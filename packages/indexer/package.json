@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
     "test": "vitest run",
     "type-check": "tsc --noEmit",
     "graph:codegen": "cd subgraph && graph codegen",
@@ -14,12 +16,16 @@
     "@cohortlens/database": "workspace:*",
     "@cohortlens/shared": "workspace:*",
     "@hono/node-server": "^1.19.4",
-    "hono": "^4.13.2"
+    "hono": "^4.13.2",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.95.0",
     "@graphprotocol/graph-ts": "^0.38.0",
     "@vitest/coverage-v8": "^4.1.10",
+    "tsup": "^8.5.1",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"

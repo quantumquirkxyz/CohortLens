@@ -1,0 +1,104 @@
+# CohortLens — production stack (self-hosted option).
+#
+# Managed alternatives (see docs/deploy.md): use Neon/Supabase for PostgreSQL
+# and a hosted The Graph subgraph instead of running this stack's database.
+#
+# Usage:
+#   docker compose -f docker/compose.prod.yaml up -d --build
+name: cohortlens
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cohortlens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cohortlens}
+      POSTGRES_DB: ${POSTGRES_DB:-cohortlens}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cohortlens} -d ${POSTGRES_DB:-cohortlens}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.migrate
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cohortlens}:${POSTGRES_PASSWORD:-cohortlens}@postgres:5432/${POSTGRES_DB:-cohortlens}
+      # SEED=true also inserts the demo seed data (chains, protocols, wallets,
+      # sample capital flows) — handy for evaluation, omit for real data.
+      SEED: ${SEED:-false}
+    command: >-
+      sh -c "node dist/migrate.js &&
+      if [ \"$$SEED\" = \"true\" ]; then node dist/seed.js; fi"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cohortlens}:${POSTGRES_PASSWORD:-cohortlens}@postgres:5432/${POSTGRES_DB:-cohortlens}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      TRUST_PROXY: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+
+  indexer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.indexer
+    restart: unless-stopped
+    environment:
+      PORT: 8001
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cohortlens}:${POSTGRES_PASSWORD:-cohortlens}@postgres:5432/${POSTGRES_DB:-cohortlens}
+      SUBGRAPH_URL_ETHEREUM: ${SUBGRAPH_URL_ETHEREUM:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data:

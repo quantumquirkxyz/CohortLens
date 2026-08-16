@@ -44,9 +44,18 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.2)
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.21.0)(pg@8.23.0)
       hono:
         specifier: ^4.13.2
         version: 4.13.2
+      pg:
+        specifier: ^8.23.0
+        version: 8.23.0
     devDependencies:
       '@types/node':
         specifier: ^22
@@ -169,6 +178,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(supports-color@10.2.2)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.6.1)
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
@@ -190,9 +202,18 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.4
         version: 1.19.17(hono@4.13.2)
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.21.0)(pg@8.23.0)
       hono:
         specifier: ^4.13.2
         version: 4.13.2
+      pg:
+        specifier: ^8.23.0
+        version: 8.23.0
     devDependencies:
       '@graphprotocol/graph-cli':
         specifier: ^0.95.0
@@ -203,6 +224,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(supports-color@8.1.1)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.6.1)
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
@@ -8239,6 +8263,34 @@ snapshots:
 
   tslib@2.8.1: {}
 
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.26)(supports-color@10.2.2)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.6.1):
+    dependencies:
+      bundle-require: 5.1.0(esbuild@0.27.7)
+      cac: 6.7.14
+      chokidar: 4.0.3
+      consola: 3.4.2
+      debug: 4.4.3(supports-color@10.2.2)
+      esbuild: 0.27.7
+      fix-dts-default-cjs-exports: 1.0.1
+      joycon: 3.1.1
+      picocolors: 1.1.1
+      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.12)(yaml@2.6.1)
+      resolve-from: 5.0.0
+      rollup: 4.62.4
+      source-map: 0.7.6
+      sucrase: 3.35.1
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.17
+      tree-kill: 1.2.2
+    optionalDependencies:
+      postcss: 8.5.26
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - jiti
+      - supports-color
+      - tsx
+      - yaml
+
   tsup@8.5.1(jiti@2.7.0)(postcss@8.5.26)(supports-color@7.2.0)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.6.1):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.27.7)
@@ -8246,6 +8298,34 @@ snapshots:
       chokidar: 4.0.3
       consola: 3.4.2
       debug: 4.4.3(supports-color@7.2.0)
+      esbuild: 0.27.7
+      fix-dts-default-cjs-exports: 1.0.1
+      joycon: 3.1.1
+      picocolors: 1.1.1
+      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.12)(yaml@2.6.1)
+      resolve-from: 5.0.0
+      rollup: 4.62.4
+      source-map: 0.7.6
+      sucrase: 3.35.1
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.17
+      tree-kill: 1.2.2
+    optionalDependencies:
+      postcss: 8.5.26
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - jiti
+      - supports-color
+      - tsx
+      - yaml
+
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.26)(supports-color@8.1.1)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.6.1):
+    dependencies:
+      bundle-require: 5.1.0(esbuild@0.27.7)
+      cac: 6.7.14
+      chokidar: 4.0.3
+      consola: 3.4.2
+      debug: 4.4.3(supports-color@8.1.1)
       esbuild: 0.27.7
       fix-dts-default-cjs-exports: 1.0.1
       joycon: 3.1.1

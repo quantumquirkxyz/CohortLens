@@ -1,0 +1,26 @@
+# CohortLens API on Fly.io (see docs/deploy.md).
+# Usage: fly launch (first time) / fly deploy, then:
+#   fly secrets set DATABASE_URL=... CORS_ORIGIN=... RATE_LIMIT_MAX=...
+app = "cohortlens-api"
+
+[build]
+  context = "../.."
+  dockerfile = "docker/Dockerfile.api"
+
+[env]
+  PORT = "8000"
+  NODE_ENV = "production"
+  TRUST_PROXY = "1"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.checks]
+    [http_service.checks.health]
+      path = "/health"
+      interval = "30s"
+      timeout = "3s"

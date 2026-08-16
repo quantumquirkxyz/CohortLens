@@ -1,0 +1,14 @@
+# CohortLens indexer sync service on Fly.io (see docs/deploy.md).
+# Runs as a private worker machine — trigger a sync with POST /sync on the
+# internal port, or expose it later behind a private network.
+# Usage: fly launch --no-deploy (first time) / fly deploy, then:
+#   fly secrets set DATABASE_URL=... SUBGRAPH_URL_ETHEREUM=...
+app = "cohortlens-indexer"
+
+[build]
+  context = "../.."
+  dockerfile = "docker/Dockerfile.indexer"
+
+[env]
+  PORT = "8001"
+  NODE_ENV = "production"

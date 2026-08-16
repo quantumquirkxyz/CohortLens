@@ -9,11 +9,35 @@ import {
   type GraphPort,
 } from '@cohortlens/lenses';
 import { getDb } from './db';
+import { corsMiddleware } from './middleware/cors';
+import { createRateLimiter } from './middleware/rate-limit';
+import { securityHeaders } from './middleware/security';
 import { createAnalysisRoutes } from './routes/analysis';
 import { graph } from './routes/graph';
 import { createLensRoutes } from './routes/lenses';
 
 export const app = new Hono();
+
+// --- Security hardening (Fase 8). Registered before routes: Hono middleware
+// must be in place before the handlers it wraps. ---
+app.use('*', securityHeaders());
+
+const cors = corsMiddleware();
+if (cors) app.use('*', cors);
+
+// Rate limiting only in production: dev/E2E/test traffic must not hit 429s.
+if (process.env.NODE_ENV === 'production') {
+  const trustProxy = process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true';
+  app.use(
+    '*',
+    createRateLimiter({
+      max: Number(process.env.RATE_LIMIT_MAX ?? 300),
+      windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000),
+      trustProxy,
+      skip: (c) => c.req.path === '/health',
+    }),
+  );
+}
 
 app.get('/', (c) =>
   c.json({

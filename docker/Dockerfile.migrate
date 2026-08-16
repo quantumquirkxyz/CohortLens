@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+# CohortLens database migration/seed — production image (one-shot job).
+#
+# Runs `node dist/migrate.js` (and optionally `node dist/seed.js` with
+# SEED=true) against DATABASE_URL. The deployed package ships the `drizzle/`
+# folder next to dist, so the migrator resolves its SQL migrations.
+FROM node:22-alpine AS build
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV CI=true
+RUN corepack enable
+
+WORKDIR /repo
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json vitest.base.config.ts eslint.config.mjs ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+COPY packages/database/package.json packages/database/
+COPY packages/lenses/package.json packages/lenses/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/indexer/package.json packages/indexer/
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm --filter @cohortlens/database build \
+  && pnpm --filter @cohortlens/database deploy --prod --legacy /out
+
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /out ./
+CMD ["node", "dist/migrate.js"]

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --out-dir dist --clean",
+    "build": "tsup",
     "start": "node dist/index.js",
     "test": "vitest run",
     "type-check": "tsc --noEmit"
@@ -15,7 +15,10 @@
     "@cohortlens/lenses": "workspace:*",
     "@cohortlens/shared": "workspace:*",
     "@hono/node-server": "^2.1.1",
-    "hono": "^4.13.2"
+    "hono": "^4.13.2",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^22",

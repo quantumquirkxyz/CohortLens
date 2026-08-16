@@ -46,6 +46,16 @@ function toDate(value: unknown): Date {
   return typeof value === 'string' ? new Date(value) : (value as Date);
 }
 
+/**
+ * API base URL, configured at build time via `VITE_API_URL`.
+ *
+ * - Unset: same-origin `/api` (dev: Vite proxy; Docker: nginx proxy).
+ * - Absolute URL (e.g. https://api.cohortlens.com): dashboard and API live on
+ *   different origins (e.g. Vercel + a container host) — the API must allow
+ *   this origin through `CORS_ORIGIN`.
+ */
+const API_BASE = ((import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? '').replace(/\/$/, '');
+
 function normalizeFlow(flow: CapitalFlow): CapitalFlow {
   return { ...flow, timestamp: toDate(flow.timestamp) };
 }
@@ -55,7 +65,7 @@ function normalizeResult(result: LensResult): LensResult {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'content-type': 'application/json' },
     ...init,
   });
