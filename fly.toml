@@ -1,0 +1,31 @@
+# Root Fly manifest for the CohortLens API.
+#
+# This makes `fly launch` / `fly deploy` work when run from the repository
+# root, which otherwise has no detectable runtime because the actual service
+# manifests live under `apps/api` and `packages/indexer`.
+#
+# The indexer remains a separate Fly app with its own manifest.
+
+app = "cohortlens"
+
+[build]
+  context = "."
+  dockerfile = "docker/Dockerfile.api"
+
+[env]
+  PORT = "8000"
+  NODE_ENV = "production"
+  TRUST_PROXY = "1"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.checks]
+    [http_service.checks.health]
+      path = "/health"
+      interval = "30s"
+      timeout = "3s"
