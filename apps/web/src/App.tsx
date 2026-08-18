@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { Cohorts } from './pages/Cohorts';
 import { GraphExplorer } from './pages/GraphExplorer';
+import { Landing } from './pages/Landing';
 import { Lenses } from './pages/Lenses';
 import { Overview } from './pages/Overview';
 import { Protocols } from './pages/Protocols';
@@ -11,7 +12,8 @@ import { Settings } from './pages/Settings';
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route index element={<Landing />} />
+      <Route path="app" element={<AppLayout />}>
         <Route index element={<Overview />} />
         <Route path="graph" element={<GraphExplorer />} />
         <Route path="lenses" element={<Lenses />} />
@@ -19,7 +21,7 @@ export default function App() {
         <Route path="routes" element={<RoutesPage />} />
         <Route path="protocols" element={<Protocols />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Route>
     </Routes>
   );

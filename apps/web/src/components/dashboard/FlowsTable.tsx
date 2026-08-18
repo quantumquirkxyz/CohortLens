@@ -1,10 +1,20 @@
 import type { CapitalFlow } from '@cohortlens/shared';
+import { Link } from 'react-router-dom';
 import { Card } from '../ui/Card';
 
 export function FlowsTable({ flows }: { flows: CapitalFlow[] }) {
   return (
     <Card title={`Recent flows (${flows.length})`}>
-      <div className="overflow-x-auto">
+      {flows.length === 0 ? (
+        <div className="rounded-md border border-dashed border-slate-700 bg-slate-950/40 px-4 py-8 text-center">
+          <p className="text-sm font-medium text-slate-300">No capital flows are available yet.</p>
+          <p className="mt-1 text-xs text-slate-500">Inspect the graph once indexed flow data arrives.</p>
+          <Link to="/app/graph" className="mt-4 inline-flex rounded-md border border-sky-500/50 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500">
+            Inspect graph
+          </Link>
+        </div>
+      ) : (
+      <div className="overflow-x-auto" tabIndex={0} aria-label="Recent capital flows">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-slate-800 text-slate-500">
@@ -34,6 +44,7 @@ export function FlowsTable({ flows }: { flows: CapitalFlow[] }) {
           </tbody>
         </table>
       </div>
+      )}
     </Card>
   );
 }

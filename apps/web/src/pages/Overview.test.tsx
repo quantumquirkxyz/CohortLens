@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Overview } from './Overview';
 import { api } from '../lib/api';
@@ -17,7 +18,9 @@ function renderOverview() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <Overview />
+      <MemoryRouter>
+        <Overview />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -49,6 +52,7 @@ describe('Overview page', () => {
     renderOverview();
 
     expect(await screen.findByText('51')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Inspect graph' })).toHaveAttribute('href', '/app/graph');
     expect(screen.getByText('Recent flows (1)')).toBeInTheDocument();
     expect(screen.getByText('wallet-1')).toBeInTheDocument();
     expect(screen.getByText('aave-v3-usdc-ethereum')).toBeInTheDocument();
@@ -62,5 +66,20 @@ describe('Overview page', () => {
     renderOverview();
 
     expect(await screen.findByText(/Failed to load graph stats/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry graph stats' })).toBeInTheDocument();
+  });
+
+  it('gives an empty flow collection a next action', async () => {
+    vi.mocked(api.getStats).mockResolvedValue({
+      nodes: { chain: 0, protocol: 0, wallet: 0, asset: 0, pool: 0, position: 0 },
+      flows: 0,
+      flowsByType: { Deposit: 0, Borrow: 0, Repay: 0, Withdraw: 0, Swap: 0, Transfer: 0 },
+    });
+    vi.mocked(api.getFlows).mockResolvedValue({ page: 1, limit: 10, flows: [] });
+
+    renderOverview();
+
+    expect(await screen.findByText('No capital flows are available yet.')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Inspect graph' }).at(-1)).toHaveAttribute('href', '/app/graph');
   });
 });
