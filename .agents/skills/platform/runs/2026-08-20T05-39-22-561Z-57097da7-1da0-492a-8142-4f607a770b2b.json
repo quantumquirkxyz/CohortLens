@@ -1,0 +1,16 @@
+{
+  "id": "57097da7-1da0-492a-8142-4f607a770b2b",
+  "skill": "skill-audit",
+  "tool": "skills:validate",
+  "startedAt": "2026-08-20T05:39:22.561Z",
+  "finishedAt": "2026-08-20T05:39:22.564Z",
+  "contextPack": "platform-default",
+  "status": "fail",
+  "warnings": [
+    "lockfile missing local entry for frontend-development"
+  ],
+  "errors": [
+    "missing .claude link for work-item-router"
+  ],
+  "skills": 39
+}

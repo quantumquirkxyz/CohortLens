@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CohortLens Skill Manifest",
+  "title": "ARIES Skill Manifest",
   "type": "object",
   "additionalProperties": false,
   "required": ["name", "description", "invocation", "version", "capabilities", "outputs"],
