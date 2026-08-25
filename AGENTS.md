@@ -27,4 +27,4 @@ Single-context: root `CONTEXT.md` is the source of truth for domain vocabulary, 
 - Research into DeFi protocol behavior or market structure -> `research`.
 - Review requests -> `code-review` or `review-pr`.
 - Dirty PR review that should be driven to clean -> `review-fix-loop`.
-- Review-fixed PR that should be merged, closed, and synced with tracker metadata -> `ship-review-fix-loop`.
+- Review-fixed PR that should be merged, closed, and synced with tracker metadata -> `ship-subissue`.
