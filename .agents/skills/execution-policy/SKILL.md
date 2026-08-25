@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Execution Policy
 
+This skill is advisory only. It does not change repository state or perform the action it judges.
+
 Use this skill before any risky state change.
 
 ## Steps
@@ -20,4 +22,3 @@ Use this skill before any risky state change.
 - the action is allowed or blocked with reason
 - the approval requirement is clear
 - rollback is named
-
