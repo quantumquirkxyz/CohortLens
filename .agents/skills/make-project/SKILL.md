@@ -38,18 +38,17 @@ The exact queries and mutations live in [`references/graphql.md`](references/gra
 - Rule: never create a board that already exists under the same title.
 - Rule: item field values are set only after the item is added — you cannot add and update an item in one call.
 
-## Quant context
+## CohortLens context
 
-This repo is **Quant** — a supervised autonomous quantitative system for crypto and Web3, driven by a canonical mathematical model, context engineering, harnesses, loops, and graph orchestration. When creating boards for this project, use domain-appropriate fields:
+This repo is **CohortLens** — a DeFi platform powered by graph engineering. When creating boards for this project, use domain-appropriate fields:
 
-- **Protocol** — the DeFi protocol involved (Aave, Uniswap, etc.)
-- **Chain** — the settlement network (Ethereum, Polygon, Arbitrum, etc.)
-- **Capital Flow Type** — Deposit, Borrow, Repay, Withdraw, Swap, Transfer
+- **Capital Flow Graph Area** — core graph, derived concepts, liquidity, risk, intelligence products, or nodes
+- **Artifact Type** — Signal, Prediction, Cohort, Route, Arbitrage Route, Wallet, Protocol, Chain, Asset, Pool
+- **Graph Layer** — semantic, analysis, product, or node
 - **Risk Level** — systemic, credit, counterparty, protocol
-- **Lens Type** — ML model, graph query/analytics, risk signal
 - **Status** — matching the triage labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix
 
-Use the project's domain glossary from `CONTEXT.md` when naming fields and items. Avoid synonyms the glossary explicitly rejects (e.g. use "Capital flow" not "transaction", "Wallet" not "user").
+Use the project's domain glossary from `CONTEXT.md` when naming fields and items. Avoid synonyms the glossary explicitly rejects.
 
 ## Steps
 
